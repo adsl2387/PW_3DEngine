@@ -78,7 +78,8 @@ void PW_3DDevice::Present()
 	char buffer[100];
 	sprintf(buffer, "fps : %d, rotate angle :%.4f , maxz: %f, minz: %f", m_iFps, m_fRotate / 2.f / PI, m_fMaxZ, m_fMinZ);
 	TextOut(hDc, 0, 0, buffer, strlen(buffer));
-	DeleteObject(hMdc);
+	//DeleteObject(hMdc);
+	DeleteDC(hMdc);
 	ReleaseDC(m_hWnd, hDc);
 }
 
@@ -92,12 +93,15 @@ void PW_3DDevice::Release()
 	if (m_hBitmap)
 	{
 		DeleteObject(m_hBitmap);
+		m_hBitmap = NULL;
 	}
 	if (m_v4dBuffer)
 	{
 		delete[] m_v4dBuffer;
+		m_v4dBuffer = NULL;
 		m_4dBuffersize = 0;
 		delete[] m_vNormalsBuffer;
+		m_vNormalsBuffer = NULL;
 	}
 }
 

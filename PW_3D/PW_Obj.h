@@ -74,12 +74,12 @@ struct PW_Mesh
 
 	void Release()
 	{
-		if (!buffer)
+		if (buffer)
 		{
 			delete[] buffer;
 			buffer = NULL;
 		}
-		if (!indexbuffer)
+		if (indexbuffer)
 		{
 			delete[] indexbuffer;
 			indexbuffer = NULL;
@@ -121,5 +121,11 @@ struct PW_Light
 		cDiffuse(cDif), cAmbient(cAmb), cSpecular(cSpe), iLightType(lightType),
 		vPosition(pos), vDirection(dir), fRange(fRan)
 	{}
+};
+
+struct PW_Texture
+{
+	LPCSTR strFileName;
+
 };
 //#endif

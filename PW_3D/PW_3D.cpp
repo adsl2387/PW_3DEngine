@@ -25,6 +25,7 @@ PW_Mesh g_PWMesh;
 PW_Camera g_PWCamera;
 
 void RenderScene();
+void Release();
 #define WNDWIDTH 800
 #define WNDHEIGHT 600
 
@@ -74,7 +75,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		RenderScene();
 		//g_PW3DDevice.Update();
 	}
-
+	Release();
 	return (int) msg.wParam;
 }
 
@@ -245,6 +246,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	
 	case WM_DESTROY:
+		
 		PostQuitMessage(0);
 		break;
 	default:
@@ -399,4 +401,10 @@ void RenderScene()
 	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	g_PW3DDevice.Update();
+}
+
+void Release()
+{
+	g_PW3DDevice.Release();
+	g_PWMesh.Release();
 }
