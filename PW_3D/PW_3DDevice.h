@@ -58,8 +58,11 @@ protected:
 	//void DrawPoint(PW_POINT point, PW_COLOR pwcolor);
 	//void DrawLine(PW_POINTF point1, PW_POINTF point2, PW_COLOR color, int isolid = 1);
 
+	//根据顶点颜色插值画线
 	void DrawLine(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
 
+	//根据纹理
+	void DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
 	void DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3, PW_COLOR color, int ds = wireframe);
 	void DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3);
 	void Present();

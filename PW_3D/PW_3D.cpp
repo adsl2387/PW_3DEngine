@@ -330,19 +330,20 @@ void RenderScene()
 	
 		PW_Material mater;
 		mater.fP = 1;
-		mater.cAmbient = PW_COLORF(0.5, 0.5, 0.5, 0.);
-		mater.cDiffuse = PW_COLORF(0.5, 0., 0);
-		mater.cSpecularReflection = PW_COLORF(0.5, 0.0, 0.5);
+		mater.cAmbient = PW_COLORF(0.1, 0.1, 0.1, 0.);
+		mater.cDiffuse = PW_COLORF(0.0, 0., 0);
+		mater.cSpecularReflection = PW_COLORF(0.5, 0.0, 0.);
 		g_PW3DDevice.SetMaterial(&mater);
 		PW_Light light;
 		light.iLightType = pw_lt_directionallight;
-		light.vDirection = PW_Vector3D(0, 1, 1);
+		light.vDirection = PW_Vector3D(1, 0, 0);
 		light.cSpecular = PW_COLORF(1, 1, 1);
 		light.cAmbient = PW_COLORF(0., 0., 0.);
 		light.cDiffuse = PW_COLORF(1, 1, 1);
 		g_PW3DDevice.AddLight(light);
 		g_PWCamera.Init(PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
+		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.0, 0.0, 0.0));
 	}
 	if (!b_gStopRotate)
 	{
@@ -375,7 +376,7 @@ void RenderScene()
 	g_PW3DDevice.SetProjTransform(wordmat);
 	PW_ViewPortMatrix(wordmat, WNDWIDTH, WNDHEIGHT);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
-	g_PW3DDevice.SetAmbientColor(PW_COLORF(0.5, 0.5, 0.5));
+	
 	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
@@ -397,7 +398,7 @@ void RenderScene()
 	g_PW3DDevice.SetProjTransform(wordmat);
 	PW_ViewPortMatrix(wordmat, WNDWIDTH, WNDHEIGHT);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
-	g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
+	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
 	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	g_PW3DDevice.Update();
