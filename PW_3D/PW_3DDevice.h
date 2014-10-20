@@ -51,6 +51,10 @@ public:
 		
 	}
 
+	void SwitchLight(){ m_bUseLight = !m_bUseLight; }
+
+	void SwitchTexture(){ m_bUseTexture = !m_bUseTexture; }
+
 	void SetTexture(PW_Texture* text)
 	{
 		if (!text)

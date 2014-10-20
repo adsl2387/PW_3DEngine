@@ -688,7 +688,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 
 
 			fLp1 =fLp1 + fIncrementlp1;
-			fLp2 =fLp1 + fIncrementlp2;
+			fLp2 =fLp2 + fIncrementlp2;
 			fU1 += fIncrementu1;
 			fV1 += fIncrementv1;
 			fU2 += fIncrementu2;
@@ -794,7 +794,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 			fz1 += fIncrementz1;
 			fz2 += fIncrementz2;
 			flp1 = flp1 + fIncrementlp1;
-			flp2 = flp1 + fIncrementlp2;
+			flp2 = flp2 + fIncrementlp2;
 			fU1 += fIncrementu1;
 			fV1 += fIncrementv1;
 			fU2 += fIncrementu2;

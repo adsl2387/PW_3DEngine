@@ -169,6 +169,7 @@ struct PW_Texture
 	LPCSTR strFileName;
 	inline PW_COLOR GetColor(PW_FLOAT u, PW_FLOAT v)
 	{
+		//return PW_RGB(255, 0, 0);
 		v = 1 - v;
 		PW_INT x = ROUND(u * bih.biWidth);
 		PW_INT y = ROUND(v * bih.biHeight);

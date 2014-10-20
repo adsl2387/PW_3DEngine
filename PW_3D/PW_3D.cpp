@@ -240,12 +240,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case 'z':
 			b_gStopRotate = !b_gStopRotate;
 			break;
+		case 'g':
+			g_PW3DDevice.SwitchLight();
+			break;
+		case 'h':
+			g_PW3DDevice.SwitchTexture();
+			break;
 		default:
 			g_PW3DDevice.SetDrawStyle();
 			break;
 		}
 		break;
-	
+	case  WM_KEYDOWN:
+		if (wParam == VK_ESCAPE)
+		{
+			CloseWindow(hWnd);
+			PostQuitMessage(0);
+		}
+			break;
 	case WM_DESTROY:
 		
 		PostQuitMessage(0);
@@ -314,18 +326,18 @@ void RenderScene()
 		};
 		PW_FLOAT uvs[12][6]=
 		{
-			{0,1,0,0,1,1},
-			{0,0,1,0,1,1},
-			{0,1,0,0,1,1},
-			{0,0,1,0,1,1},
-			{0,1,0,0,1,1},
-			{0,0,1,0,1,1},
-			{0,1,0,0,1,1},
-			{0,0,1,0,1,1},
-			{0,1,0,0,1,1},
-			{0,0,1,0,1,1},
-			{0,1,0,0,1,1},
-			{0,0,1,0,1,1},
+			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
+			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
 		};
 		for (int i = 0; i < 12;i++)
 		{
@@ -354,7 +366,7 @@ void RenderScene()
 		light.cSpecular = PW_COLORF(0.5, 0.5, 0.5);
 		light.cAmbient = PW_COLORF(0., 0., 0.);
 		light.cDiffuse = PW_COLORF(1, 1, 1);
-	//	g_PW3DDevice.AddLight(light);
+		g_PW3DDevice.AddLight(light);
 		g_PWCamera.Init(PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
 		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.0, 0.0, 0.0));
@@ -391,7 +403,7 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, WNDWIDTH, WNDHEIGHT);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
-	g_PW3DDevice.DrawMesh(g_PWMesh);
+//	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
 	
