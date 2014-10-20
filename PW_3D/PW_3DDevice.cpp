@@ -435,14 +435,14 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 		//sprintf(szdebug, "x:%.2f,y:%.2f,z:%.2f,w:%.2f\n", m_v4dBuffer[i].x, m_v4dBuffer[i].y, m_v4dBuffer[i].z, m_v4dBuffer[i].w);
 		//OutputDebugString(szdebug);
 	}
-	for (int i = 0; i < mesh.indexcount;i+=3)
+	for (int i = 0; i < mesh.indexcount;i++)
 	{
-		int index1 = mesh.indexbuffer[i];
-		int index2 = mesh.indexbuffer[i + 1];
-		int index3 = mesh.indexbuffer[i + 2];
-		DrawTriPrimitive(PW_POINT3D(m_v4dBuffer[index1], mesh.buffer[index1].pwColor, m_vNormalsBuffer[index1])
-			, PW_POINT3D(m_v4dBuffer[index2], mesh.buffer[index2].pwColor, m_vNormalsBuffer[index2])
-			, PW_POINT3D(m_v4dBuffer[index3], mesh.buffer[index3].pwColor, m_vNormalsBuffer[index3]), PW_RGBA(255, 0, 0), m_ds);
+		int index1 = mesh.indexbuffer[i][0];
+		int index2 = mesh.indexbuffer[i][1];
+		int index3 = mesh.indexbuffer[i][2];
+		DrawTriPrimitive(PW_POINT3D(m_v4dBuffer[index1], mesh.buffer[index1].pwColor, m_vNormalsBuffer[index1], mesh.buffer[index1].u, mesh.buffer[index1].v)
+			, PW_POINT3D(m_v4dBuffer[index2], mesh.buffer[index2].pwColor, m_vNormalsBuffer[index2], mesh.buffer[index2].u, mesh.buffer[index2].v)
+			, PW_POINT3D(m_v4dBuffer[index3], mesh.buffer[index3].pwColor, m_vNormalsBuffer[index3], mesh.buffer[index3].u, mesh.buffer[index3].v), PW_RGBA(255, 0, 0), m_ds);
 	}
 }
 
@@ -563,16 +563,21 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	{
 		if (dotRes > 0)
 		{
-			DrawLine(PW_POINT3D(p1, point1.pwColor, point1.vNormal), PW_POINT3D(p2, point2.pwColor, point2.vNormal));
-			DrawLine(PW_POINT3D(p2, point2.pwColor, point2.vNormal), PW_POINT3D(p3, point3.pwColor, point3.vNormal));
-			DrawLine(PW_POINT3D(p3, point3.pwColor, point3.vNormal), PW_POINT3D(p1, point1.pwColor, point1.vNormal));
+			DrawLine(PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP)
+				, PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP));
+			DrawLine(PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP)
+				, PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP));
+			DrawLine(PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP)
+				, PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP));
 		}
 	}
 	else
 	{
 		if (dotRes > 0)
 		{
-			DrawTriangle(PW_POINT3D(p1, point1.pwColor), PW_POINT3D(p2, point2.pwColor), PW_POINT3D(p3, point3.pwColor));
+			DrawTriangle(PW_POINT3D(p1, point1.pwColor, PW_Vector3D(), point1.u, point1.v, point1.fP)
+				, PW_POINT3D(p2, point2.pwColor, PW_Vector3D(), point2.u, point2.v, point2.fP)
+				, PW_POINT3D(p3, point3.pwColor, PW_Vector3D(), point3.u, point3.v, point3.fP));
 		}
 		
 	}
@@ -603,12 +608,12 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 	
 	int dy1 = ROUND(pps[1].y) - ROUND(pps[0].y);
 	int dy2 = ROUND(pps[2].y) - ROUND(pps[0].y);
-	int cury = pps[0].y;
+	int cury = ROUND(pps[0].y);
 	PW_POINT3D leftPoint, rightPoint;
 	if (dy1 > 0)
 	{
-		PW_FLOAT fIncrementx1 =(ROUND(pps[1].x) - ROUND(pps[0].x)) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementx2 = (ROUND(pps[2].x) - ROUND(pps[0].x)) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementx1 =(pps[1].x - pps[0].x) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementx2 = (pps[2].x - pps[0].x) / PW_FLOAT(dy2);
 		PW_FLOAT fIncrementz1 = (pps[1].z - pps[0].z) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementz2 = (pps[2].z - pps[0].z) / PW_FLOAT(dy2);
 		PW_FLOAT fIncrementr1 = (PW_RGBA_R(pps[1].pwColor) - PW_RGBA_R(pps[0].pwColor)) / PW_FLOAT(dy1);
@@ -666,7 +671,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		}
 		else
 			DrawLine(pps[0], pps[0]);
-		DrawLine(pps[0], pps[0]);
+		//DrawLine(pps[0], pps[0]);
 		for (int k = 0; k < dy1;++k)
 		{
 			fXl += fIncrementx1;
@@ -690,14 +695,14 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 			fV2 += fIncrementv2;
 			if (k == dy1 - 1)
 			{
-				leftPoint.x = ROUND(fXl);
+				leftPoint.x = fXl;
 				leftPoint.y = curY;
 				leftPoint.z = fZl;
 				leftPoint.fP = fLp1;
 				leftPoint.u = fU1;
 				leftPoint.v = fV1;
 				leftPoint.pwColor = PW_RGBA(ROUND(fR1), ROUND(fG1), ROUND(fB1));
-				rightPoint.x = ROUND(fXr);
+				rightPoint.x = fXr;
 				rightPoint.y = curY;
 				rightPoint.pwColor = PW_RGBA(ROUND(fR2), ROUND(fG2), ROUND(fB2));
 				rightPoint.z = fZr;
@@ -718,8 +723,8 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 			p2.z = fZr;
 			p2.pwColor = PW_RGBA(ROUND(fR2), ROUND(fG2), ROUND(fB2));
 			p2.fP = fLp2;
-			p2.u = fU1;
-			p2.v = fV1;
+			p2.u = fU2;
+			p2.v = fV2;
 			if (m_bUseTexture)
 			{
 				DrawLineTexture(p1, p2);
@@ -748,8 +753,8 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 	{
 		dy1 = ROUND(pps[2].y) - ROUND(leftPoint.y);
 		dy2 = ROUND(pps[2].y) - ROUND(rightPoint.y);
-		PW_FLOAT fIncrementx1 = (ROUND(pps[2].x) - ROUND(leftPoint.x)) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementx2 = (ROUND(pps[2].x) - ROUND(rightPoint.x)) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementx1 = (pps[2].x - leftPoint.x) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementx2 = (pps[2].x - rightPoint.x) / PW_FLOAT(dy2);
 		PW_FLOAT fIncrementz1 = (pps[2].z - leftPoint.z) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementz2 = (pps[2].z - rightPoint.z) / PW_FLOAT(dy2);
 		PW_FLOAT fIncrementr1 = (PW_RGBA_R(pps[2].pwColor) - PW_RGBA_R(leftPoint.pwColor)) / PW_FLOAT(dy1);
@@ -781,7 +786,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		PW_FLOAT fV1 = leftPoint.v;
 		PW_FLOAT fU2 = rightPoint.u;
 		PW_FLOAT fV2 = rightPoint.v;
-		int curY = leftPoint.y;
+		int curY = ROUND(leftPoint.y);
 		for (int k = 0; k < steps;++k)
 		{
 			fx1 += fIncrementx1;

@@ -6,7 +6,10 @@
 typedef float PW_FLOAT;
 typedef int PW_INT;
 typedef double PW_DOUBLE;
+typedef unsigned char PW_BYTE;
+
 #define PI 3.1415926535898
+#define EPSILON 0.0000001
 #define ROUND(x) ((int)((x) + 0.5f))
 typedef DWORD PW_COLOR;
 
@@ -182,10 +185,10 @@ struct PW_COLORF
 
 	PW_COLOR operator*(PW_COLOR pwColor)
 	{
-		int iR = PW_RGBA_R(pwColor) * r;
-		int iG = PW_RGBA_G(pwColor) * g;
-		int iB = PW_RGBA_B(pwColor) * b;
-		int iA = PW_RGBA_A(pwColor) * a;
+		int iR = ROUND(PW_RGBA_R(pwColor) * r);
+		int iG = ROUND(PW_RGBA_G(pwColor) * g);
+		int iB = ROUND(PW_RGBA_B(pwColor) * b);
+		int iA = ROUND(PW_RGBA_A(pwColor) * a);
 		PW_CLAMP(iR, 0, 255);
 		PW_CLAMP(iG, 0, 255);
 		PW_CLAMP(iB, 0, 255);

@@ -51,6 +51,18 @@ public:
 		
 	}
 
+	void SetTexture(PW_Texture* text)
+	{
+		if (!text)
+		{
+			m_bUseTexture = false;
+		}
+		else
+		{
+			m_texture = text;
+			m_bUseTexture = true;
+		}
+	}
 	void EnableLight(bool bUse){m_bUseLight = bUse;}
 
 	void SetCamera(PW_Camera* car){ m_Camera = car; }

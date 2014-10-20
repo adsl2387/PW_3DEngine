@@ -23,6 +23,7 @@ INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 PW_3DDevice g_PW3DDevice;
 PW_Mesh g_PWMesh;
 PW_Camera g_PWCamera;
+PW_Texture g_PWTexture;
 
 void RenderScene();
 void Release();
@@ -280,6 +281,11 @@ void RenderScene()
 	static PW_FLOAT fr = 0;
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
+		if (g_PWTexture.LoadBitmap("d:\\tietu.bmp"))
+		{
+			g_PW3DDevice.SetTexture(&g_PWTexture);
+		}
+		
 		PW_POINT3D* buffer = new PW_POINT3D[8];
 		buffer[0] = PW_POINT3D(0, 0, 0, PW_RGBA(255, 0, 0));
 		buffer[1] = PW_POINT3D(40, 0, 0, PW_RGBA(0, 255, 0));
@@ -289,49 +295,92 @@ void RenderScene()
 		buffer[5] = PW_POINT3D(40, 0, 40, PW_RGBA(0, 255, 255));
 		buffer[6] = PW_POINT3D(40, 40, 40, PW_RGBA(125, 125, 125));
 		buffer[7] = PW_POINT3D(0, 40, 40, PW_RGBA(123, 0, 0));
-		int* indexbuffer = new int[12 * 3];
-		indexbuffer[0] = 0;
-		indexbuffer[1] = 3;
-		indexbuffer[2] = 1;
-		indexbuffer[3] = 3;
-		indexbuffer[4] = 2;
-		indexbuffer[5] = 1;
-		indexbuffer[6] = 1;
-		indexbuffer[7] = 2;
-		indexbuffer[8] = 5;
-		indexbuffer[9] = 2;
-		indexbuffer[10] = 6;
-		indexbuffer[11] = 5;
-		indexbuffer[12] = 6;
-		indexbuffer[13] = 4;
-		indexbuffer[14] = 5;
-		indexbuffer[15] = 6;
-		indexbuffer[16] = 7;
-		indexbuffer[17] = 4;
-		indexbuffer[18] = 7;
-		indexbuffer[19] = 3;
-		indexbuffer[20] = 4;
-		indexbuffer[21] = 3;
-		indexbuffer[22] = 0;
-		indexbuffer[23] = 4;
-		indexbuffer[24] = 3;
-		indexbuffer[25] = 7;
-		indexbuffer[26] = 2;
-		indexbuffer[27] = 7;
-		indexbuffer[28] = 6;
-		indexbuffer[29] = 2;
-		indexbuffer[30] = 0;
-		indexbuffer[31] = 1;
-		indexbuffer[32] = 4;
-		indexbuffer[33] = 1;
-		indexbuffer[34] = 5;
-		indexbuffer[35] = 4;
+		
+		PW_Triangle* indexbuffer = new PW_Triangle[12];
+		int indexbbb[12][3] = 
+		{
+			{0,3,1},
+			{3,2,1},
+			{1,2,5},
+			{2,6,5},
+			{5,6,4},
+			{6,7,4},
+			{4,7,0},
+			{7,3,0},
+			{3,7,2},
+			{7,6,2},
+			{4,0,5},
+			{0,1,5}
+		};
+		PW_FLOAT uvs[12][6]=
+		{
+			{0,1,0,0,1,1},
+			{0,0,1,0,1,1},
+			{0,1,0,0,1,1},
+			{0,0,1,0,1,1},
+			{0,1,0,0,1,1},
+			{0,0,1,0,1,1},
+			{0,1,0,0,1,1},
+			{0,0,1,0,1,1},
+			{0,1,0,0,1,1},
+			{0,0,1,0,1,1},
+			{0,1,0,0,1,1},
+			{0,0,1,0,1,1},
+		};
+		for (int i = 0; i < 12;i++)
+		{
+			indexbuffer[i][0] = indexbbb[i][0];
+			indexbuffer[i][1] = indexbbb[i][1];
+			indexbuffer[i][2] = indexbbb[i][2];
+			indexbuffer[i].u1 = uvs[i][0];
+			indexbuffer[i].v1 = uvs[i][1];
+			indexbuffer[i].u2 = uvs[i][2];
+			indexbuffer[i].v2 = uvs[i][3];
+			indexbuffer[i].u3 = uvs[i][4];
+			indexbuffer[i].v3 = uvs[i][5];
+		}
+		/*indexbuffer[0][0] = 0;
+		indexbuffer[0][1] = 3;
+		indexbuffer[0][2] = 1;
+		indexbuffer[1][0] = 3;
+		indexbuffer[1][1] = 2;
+		indexbuffer[1][2] = 1;
+		indexbuffer[2][0] = 1;
+		indexbuffer[2][1] = 2;
+		indexbuffer[2][2] = 5;
+		indexbuffer[3][0] = 2;
+		indexbuffer[3][1] = 6;
+		indexbuffer[3][2] = 5;
+		indexbuffer[4][0] = 6;
+		indexbuffer[4][1] = 4;
+		indexbuffer[4][2] = 5;
+		indexbuffer[5][0] = 6;
+		indexbuffer[5][1] = 7;
+		indexbuffer[5][2] = 4;
+		indexbuffer[6][0] = 7;
+		indexbuffer[6][1] = 3;
+		indexbuffer[6][2] = 4;
+		indexbuffer[7][0] = 3;
+		indexbuffer[7][1] = 0;
+		indexbuffer[7][2] = 4;
+		indexbuffer[8][0] = 3;
+		indexbuffer[8][1] = 7;
+		indexbuffer[8][2] = 2;
+		indexbuffer[9][0] = 7;
+		indexbuffer[9][1] = 6;
+		indexbuffer[9][2] = 2;
+		indexbuffer[10][0] = 0;
+		indexbuffer[10][1] = 1;
+		indexbuffer[10][2] = 4;
+		indexbuffer[11][0] = 1;
+		indexbuffer[11][1] = 5;
+		indexbuffer[11][2] = 4;*/
 		g_PWMesh.SetBuffer(buffer, indexbuffer, 8, 36);
 	
 		PW_Material mater;
 		mater.fP = 1;
 		mater.cAmbient = PW_COLORF(0., 0., 0., 0.);
-		mater.cDiffuse = PW_COLORF(0.5, 0.5, 0.5);
+		mater.cDiffuse = PW_COLORF(1,1, 1);
 		mater.cSpecularReflection = PW_COLORF(0.0, 0.0, 0.);
 		g_PW3DDevice.SetMaterial(&mater);
 		PW_Light light;
@@ -354,7 +403,7 @@ void RenderScene()
 		}
 		//fr = 0.2013 * 2 * PI;
 		//fr = 0.7299 * 2 * PI;
-		//fr = 0;
+		fr = 0;
 		g_PW3DDevice.SetHelpOutputInfo(fr);
 	}
 	
@@ -381,7 +430,7 @@ void RenderScene()
 	
 	//mesh2
 	
-	PW_RotateByXMatrix(rotatemat, PI / 4.0f);
+	PW_RotateByXMatrix(rotatemat,0/* PI / 4.0f*/);
 	
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
