@@ -167,28 +167,101 @@ struct PW_Light
 struct PW_Texture
 {
 	LPCSTR strFileName;
-	inline PW_COLOR GetColor(PW_FLOAT u, PW_FLOAT v)
+	inline PW_COLOR BiLinerGetColor(PW_FLOAT u, PW_FLOAT v)
 	{
-		//return PW_RGB(255, 0, 0);
 		v = 1 - v;
-		PW_INT x = ROUND(u * bih.biWidth);
-		PW_INT y = ROUND(v * bih.biHeight);
-		PW_COLOR ret;
+		PW_FLOAT x = u * bih.biWidth;
+		PW_FLOAT y = v * bih.biHeight;
+		PW_FLOAT x0 = PW_INT(x);
+		PW_FLOAT y0 = PW_INT(y);
+		PW_FLOAT x1 = x - x0;
+		PW_FLOAT y1 = y - y0;
+		PW_FLOAT x2 = x0 + 1 - x;
+		PW_FLOAT y2 = y0 + 1 - y;
+		PW_FLOAT r1 = x2 * y2;
+		PW_FLOAT r2 = x1 * y2;
+		PW_FLOAT r3 = x2 * y1;
+		PW_FLOAT r4 = x1 * y1;
+		PW_INT r, g, b, r11, g11, b11;
+		r = 0;
+		g = 0;
+		b = 0;
+		GetColorI(x0, y0, r1, r11,g11,b11);
+		r += r11;
+		g += g11;
+		b += b11;
+		GetColorI(x0 + 1, y0, r2, r11, g11, b11);
+		r += r11;
+		g += g11;
+		b += b11;
+		GetColorI(x0, y0 - 1, r3, r11, g11, b11);
+		r += r11;
+		g += g11;
+		b += b11;
+		GetColorI(x0 + 1, y0 - 1, r4, r11, g11, b11);
+		r += r11;
+		g += g11;
+		b += b11;
+		PW_CLAMP(r, 0, 255);
+		PW_CLAMP(g, 0, 255);
+		PW_CLAMP(b, 0, 255);
+		PW_COLOR ret = PW_RGBA(r,g,b);
+		return ret;
+	}
+
+	inline void GetColorI(PW_INT x, PW_INT y, PW_FLOAT f, PW_INT& r,  PW_INT& g, PW_INT& b)
+	{
+		
+		if (x >= bih.biWidth || y >= bih.biHeight || x < 0 || y < 0)
+		{
+			return ;
+		}
+		if (bih.biBitCount == 24)
+		{
+			b = ROUND(pBuffer[y * (bih.biWidth * 3 + iSpan) + x * 3] * f);
+			g = ROUND(pBuffer[y * (bih.biWidth * 3 + iSpan) + x * 3 + 1] * f);
+			r = ROUND(pBuffer[y * (bih.biWidth * 3 + iSpan) + x * 3 + 2] * f);
+			
+		}
+		else
+		{
+			 b = ROUND(pBuffer[y * bih.biWidth * 4 + x * 4] * f);
+			 g = ROUND(pBuffer[y * bih.biWidth * 4 + x * 4 + 1] * f);
+			 r = ROUND(pBuffer[y * bih.biWidth * 4 + x * 4 + 2] * f);
+			
+		}
+	}
+
+	inline PW_COLOR GetColorI(PW_INT x, PW_INT y)
+	{
+		PW_COLOR ret = 0;
+		if (x >= bih.biWidth || y >= bih.biHeight || x < 0 || y < 0)
+		{
+			return ret;
+		}
 		if (bih.biBitCount == 24)
 		{
 			PW_INT b = pBuffer[y * (bih.biWidth * 3 + iSpan) + x * 3];
 			PW_INT g = pBuffer[y * (bih.biWidth * 3 + iSpan) + x * 3 + 1];
 			PW_INT r = pBuffer[y * (bih.biWidth * 3 + iSpan) + x * 3 + 2];
-			ret = PW_RGB(r,g,b);
+			ret = PW_RGB(r, g, b);
 		}
 		else
 		{
 			PW_INT b = pBuffer[y * bih.biWidth * 4 + x * 4];
 			PW_INT g = pBuffer[y * bih.biWidth * 4 + x * 4 + 1];
 			PW_INT r = pBuffer[y * bih.biWidth * 4 + x * 4 + 2];
-			ret = PW_RGB(r,g,b);
+			ret = PW_RGB(r, g, b);
 		}
 		return ret;
+	}
+
+	inline PW_COLOR GetColor(PW_FLOAT u, PW_FLOAT v)
+	{
+		v = 1 - v;
+		PW_INT x = ROUND(u * bih.biWidth);
+		PW_INT y = ROUND(v * bih.biHeight);
+		return GetColorI(x, y);
 	}
 	PW_BYTE * pBuffer;
 	BITMAPINFOHEADER bih;

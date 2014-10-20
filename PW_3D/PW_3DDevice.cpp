@@ -14,6 +14,7 @@ PW_3DDevice::PW_3DDevice()
 	m_ds = wireframe;
 	m_bUseMaterial = false;
 	m_bUseLight = false;
+	m_bUseBiliner = false;
 }
 
 PW_3DDevice::~PW_3DDevice()
@@ -76,8 +77,9 @@ void PW_3DDevice::Present()
 		m_lastTick = dwCur;
 	}
 	SetBkMode(hDc, TRANSPARENT);
-	char buffer[100];
-	sprintf(buffer, "fps : %d, rotate angle :%.4f , maxz: %f, minz: %f", m_iFps, m_fRotate / 2.f / PI, m_fMaxZ, m_fMinZ);
+	char buffer[200];
+	sprintf(buffer, "fps : %d, rotate angle :%.4f , use light: %d, use texture: %d, use material: %d, use bilinerfilter: %d"
+		, m_iFps, m_fRotate / 2.f / PI, m_bUseLight, m_bUseTexture ,m_bUseMaterial, m_bUseBiliner);
 	TextOut(hDc, 0, 0, buffer, strlen(buffer));
 	//DeleteObject(hMdc);
 	DeleteDC(hMdc);
@@ -208,12 +210,18 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 	{
 		if (m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] - point1.z> 0)
 		{
-			PW_COLOR pwColor = point1.fP * m_texture->GetColor(point1.u, point1.v);
+			PW_COLOR pwColor;
+			if (m_bUseBiliner)
+			{
+				pwColor = point1.fP * m_texture->BiLinerGetColor(point1.u, point1.v);
+			}
+			else
+				pwColor = point1.fP * m_texture->GetColor(point1.u, point1.v);
 			
 			m_pBitBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = pwColor;
 			m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = point1.z;
-			m_fMaxZ = max(point1.z, m_fMaxZ);
-			m_fMinZ = min(point1.z, m_fMinZ);
+			//m_fMaxZ = max(point1.z, m_fMaxZ);
+			//m_fMinZ = min(point1.z, m_fMinZ);
 		}	
 	}
 	if (steps == 0)
@@ -284,10 +292,16 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 		}
 		if (m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] - fz> 0)
 		{
-			PW_COLOR pwColor = fLp1 * m_texture->GetColor(fU1, fV1);
+			PW_COLOR pwColor;
+			if (m_bUseBiliner)
+			{
+				pwColor = fLp1 * m_texture->BiLinerGetColor(fU1, fV1);
+			}
+			else
+				pwColor = fLp1 * m_texture->GetColor(fU1, fV1);
 		
-			m_fMaxZ = max(fz, m_fMaxZ);
-			m_fMinZ = min(fz, m_fMinZ);
+			//m_fMaxZ = max(fz, m_fMaxZ);
+			//m_fMinZ = min(fz, m_fMinZ);
 			m_pBitBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] = pwColor;
 			m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] = fz;
 		}
@@ -324,8 +338,8 @@ void PW_3DDevice::DrawLine(PW_POINT3D point1, PW_POINT3D point2, int isolid)
 			}
 			m_pBitBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = pwColor;
 			m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = point1.z;
-			m_fMaxZ = max(point1.z, m_fMaxZ);
-			m_fMinZ = min(point1.z, m_fMinZ);
+			//m_fMaxZ = max(point1.z, m_fMaxZ);
+			//m_fMinZ = min(point1.z, m_fMinZ);
 		}	
 	}
 	if (steps == 0)
@@ -398,8 +412,8 @@ void PW_3DDevice::DrawLine(PW_POINT3D point1, PW_POINT3D point2, int isolid)
 		{
 			PW_COLOR pwColor =  PW_RGBA(ROUND(fr), ROUND(fg), ROUND(fb));
 
-			m_fMaxZ = max(fz, m_fMaxZ);
-			m_fMinZ = min(fz, m_fMinZ);
+			//m_fMaxZ = max(fz, m_fMaxZ);
+			//m_fMinZ = min(fz, m_fMinZ);
 			m_pBitBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] = pwColor;
 			m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] = fz;
 		}

@@ -68,7 +68,7 @@ public:
 		}
 	}
 	void EnableLight(bool bUse){m_bUseLight = bUse;}
-
+	void SwitchTextFilter(){ m_bUseBiliner = !m_bUseBiliner; }
 	void SetCamera(PW_Camera* car){ m_Camera = car; }
 	PW_3DDevice();
 	~PW_3DDevice();
@@ -118,6 +118,7 @@ private:
 	PW_FLOAT m_fMinZ;
 	bool m_bUseLight;
 	bool m_bUseTexture;
+	bool m_bUseBiliner;
 };
 
 //#endif

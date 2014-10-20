@@ -246,6 +246,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case 'h':
 			g_PW3DDevice.SwitchTexture();
 			break;
+		case 'j':
+			g_PW3DDevice.SwitchTextFilter();
+			break;
 		default:
 			g_PW3DDevice.SetDrawStyle();
 			break;
@@ -293,7 +296,7 @@ void RenderScene()
 	static PW_FLOAT fr = 0;
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
-		if (g_PWTexture.LoadBitmap("d:\\tietu.bmp"))
+		if (g_PWTexture.LoadBitmap("d:\\tietu3.bmp"))
 		{
 			g_PW3DDevice.SetTexture(&g_PWTexture);
 		}
@@ -403,7 +406,7 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, WNDWIDTH, WNDHEIGHT);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
-//	g_PW3DDevice.DrawMesh(g_PWMesh);
+	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
 	
