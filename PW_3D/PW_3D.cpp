@@ -339,43 +339,8 @@ void RenderScene()
 			indexbuffer[i].u3 = uvs[i][4];
 			indexbuffer[i].v3 = uvs[i][5];
 		}
-		/*indexbuffer[0][0] = 0;
-		indexbuffer[0][1] = 3;
-		indexbuffer[0][2] = 1;
-		indexbuffer[1][0] = 3;
-		indexbuffer[1][1] = 2;
-		indexbuffer[1][2] = 1;
-		indexbuffer[2][0] = 1;
-		indexbuffer[2][1] = 2;
-		indexbuffer[2][2] = 5;
-		indexbuffer[3][0] = 2;
-		indexbuffer[3][1] = 6;
-		indexbuffer[3][2] = 5;
-		indexbuffer[4][0] = 6;
-		indexbuffer[4][1] = 4;
-		indexbuffer[4][2] = 5;
-		indexbuffer[5][0] = 6;
-		indexbuffer[5][1] = 7;
-		indexbuffer[5][2] = 4;
-		indexbuffer[6][0] = 7;
-		indexbuffer[6][1] = 3;
-		indexbuffer[6][2] = 4;
-		indexbuffer[7][0] = 3;
-		indexbuffer[7][1] = 0;
-		indexbuffer[7][2] = 4;
-		indexbuffer[8][0] = 3;
-		indexbuffer[8][1] = 7;
-		indexbuffer[8][2] = 2;
-		indexbuffer[9][0] = 7;
-		indexbuffer[9][1] = 6;
-		indexbuffer[9][2] = 2;
-		indexbuffer[10][0] = 0;
-		indexbuffer[10][1] = 1;
-		indexbuffer[10][2] = 4;
-		indexbuffer[11][0] = 1;
-		indexbuffer[11][1] = 5;
-		indexbuffer[11][2] = 4;*/
-		g_PWMesh.SetBuffer(buffer, indexbuffer, 8, 36);
+	
+		g_PWMesh.SetBuffer(buffer, indexbuffer, 8, 12);
 	
 		PW_Material mater;
 		mater.fP = 1;
@@ -389,7 +354,7 @@ void RenderScene()
 		light.cSpecular = PW_COLORF(0.5, 0.5, 0.5);
 		light.cAmbient = PW_COLORF(0., 0., 0.);
 		light.cDiffuse = PW_COLORF(1, 1, 1);
-		g_PW3DDevice.AddLight(light);
+	//	g_PW3DDevice.AddLight(light);
 		g_PWCamera.Init(PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
 		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.0, 0.0, 0.0));
@@ -403,7 +368,7 @@ void RenderScene()
 		}
 		//fr = 0.2013 * 2 * PI;
 		//fr = 0.7299 * 2 * PI;
-		fr = 0;
+		//fr = 0;
 		g_PW3DDevice.SetHelpOutputInfo(fr);
 	}
 	
@@ -426,11 +391,11 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, WNDWIDTH, WNDHEIGHT);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
-	//g_PW3DDevice.DrawMesh(g_PWMesh);
+	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
 	
-	PW_RotateByXMatrix(rotatemat,0/* PI / 4.0f*/);
+	PW_RotateByXMatrix(rotatemat, PI / 4.0f);
 	
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 

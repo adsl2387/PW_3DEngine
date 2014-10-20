@@ -183,7 +183,7 @@ void PW_3DDevice::Update()
 {
 	// TODO: 在此添加任意绘图代码...
 	Present();
-	Clear(PW_RGBA(255, 255, 255), 1.f);
+	Clear(PW_RGBA(125, 125, 125), 1.f);
 }
 
 void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isolid /* = 1 */)
@@ -440,9 +440,9 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 		int index1 = mesh.indexbuffer[i][0];
 		int index2 = mesh.indexbuffer[i][1];
 		int index3 = mesh.indexbuffer[i][2];
-		DrawTriPrimitive(PW_POINT3D(m_v4dBuffer[index1], mesh.buffer[index1].pwColor, m_vNormalsBuffer[index1], mesh.buffer[index1].u, mesh.buffer[index1].v)
-			, PW_POINT3D(m_v4dBuffer[index2], mesh.buffer[index2].pwColor, m_vNormalsBuffer[index2], mesh.buffer[index2].u, mesh.buffer[index2].v)
-			, PW_POINT3D(m_v4dBuffer[index3], mesh.buffer[index3].pwColor, m_vNormalsBuffer[index3], mesh.buffer[index3].u, mesh.buffer[index3].v), PW_RGBA(255, 0, 0), m_ds);
+		DrawTriPrimitive(PW_POINT3D(m_v4dBuffer[index1], mesh.buffer[index1].pwColor, m_vNormalsBuffer[index1], mesh.indexbuffer[i].u1, mesh.indexbuffer[i].v1)
+			, PW_POINT3D(m_v4dBuffer[index2], mesh.buffer[index2].pwColor, m_vNormalsBuffer[index2], mesh.indexbuffer[i].u2, mesh.indexbuffer[i].v2)
+			, PW_POINT3D(m_v4dBuffer[index3], mesh.buffer[index3].pwColor, m_vNormalsBuffer[index3], mesh.indexbuffer[i].u3, mesh.indexbuffer[i].v3), PW_RGBA(255, 0, 0), m_ds);
 	}
 }
 
@@ -500,7 +500,7 @@ void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
 	else
 	{
 		cP = 0;
-		cD = 1;
+		cD = PW_COLORF(1,1,1,1);
 		cS = 0;
 	}
 	

@@ -21,6 +21,8 @@ struct PW_Vertex:public PW_Vector3D
 		this->x = fx;
 		this->y = fy;
 		this->z = fz;
+		u = 0;
+		v = 0;
 	}
 
 	PW_Vertex(PW_Vector4D& v4d, PW_COLOR color, PW_Vector3D nor = PW_Vector3D(0,0,0), PW_FLOAT u = 0, PW_FLOAT v = 0, PW_COLORF fP = PW_COLORF())
