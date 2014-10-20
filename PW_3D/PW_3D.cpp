@@ -377,7 +377,7 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, WNDWIDTH, WNDHEIGHT);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
-	g_PW3DDevice.DrawMesh(g_PWMesh);
+	//g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
 	

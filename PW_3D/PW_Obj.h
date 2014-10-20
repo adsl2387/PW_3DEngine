@@ -130,5 +130,15 @@ struct PW_Texture
 {
 	LPCSTR strFileName;
 	PW_COLOR GetColor(PW_FLOAT u, PW_FLOAT v){return 0;}
+	PW_COLOR * pBuffer;
+	PW_INT iWidth;
+	PW_INT iHeight;
+	PW_Texture()
+	{
+		strFileName = NULL;
+		pBuffer = NULL;
+	}
+
+	bool LoadBitmap(LPCSTR strFile);
 };
 //#endif

@@ -183,7 +183,7 @@ void PW_3DDevice::Update()
 {
 	// TODO: 在此添加任意绘图代码...
 	Present();
-	Clear(PW_RGBA(125, 125, 125), 1.f);
+	Clear(PW_RGBA(255, 255, 255), 1.f);
 }
 
 void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isolid /* = 1 */)
