@@ -12,6 +12,9 @@ struct PW_Vertex:public PW_Vector3D
 {
 	PW_COLOR pwColor;
 	PW_Vector3D vNormal;
+	PW_COLORF fP;
+	PW_FLOAT u;
+	PW_FLOAT v;
 	PW_Vertex(PW_FLOAT fx = 0., PW_FLOAT fy = 0., PW_FLOAT fz = 0., PW_COLOR color = PW_RGBA(255, 255, 255))
 		: pwColor(color)
 	{
@@ -126,6 +129,6 @@ struct PW_Light
 struct PW_Texture
 {
 	LPCSTR strFileName;
-
+	PW_COLOR GetColor(PW_FLOAT u, PW_FLOAT v){return 0;}
 };
 //#endif

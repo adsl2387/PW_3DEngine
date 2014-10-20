@@ -192,6 +192,30 @@ struct PW_COLORF
 		PW_CLAMP(iA, 0, 255);
 		return PW_RGBA(iR, iG, iB);
 	}
+
+	PW_COLORF operator-(PW_COLORF& c)
+	{
+		PW_COLORF ret;
+		ret.r = r - c.r;
+		ret.b = b - c.b;
+		ret.g = g - c.g;
+		ret.a = a - c.a;
+		return ret;
+	}
+
+	PW_COLORF operator/(PW_FLOAT c)
+	{
+		PW_COLORF ret;
+		if (c == 0)
+		{
+			return ret;
+		}
+		ret.r = r / c;
+		ret.b = b / c;
+		ret.g = g / c;
+		ret.a = a / c;
+		return ret;
+	}
 };
 
 struct PW_Line

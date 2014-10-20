@@ -33,7 +33,7 @@ public:
 	void SetDrawStyle(){ m_ds = pw_dscount - m_ds; }
 	void ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat);
 
-	void AddLight(PW_Light light){ m_vLights.push_back(light); }
+	void AddLight(PW_Light light){ m_vLights.push_back(light); m_bUseLight = true;}
 
 	void SetAmbientColor(PW_COLORF amb){ m_Ambient = amb; }
 
@@ -50,6 +50,9 @@ public:
 		}
 		
 	}
+
+	void EnableLight(bool bUse){m_bUseLight = bUse;}
+
 	void SetCamera(PW_Camera* car){ m_Camera = car; }
 	PW_3DDevice();
 	~PW_3DDevice();
@@ -93,9 +96,12 @@ private:
 	int m_ds;
 	vector<PW_Light> m_vLights;
 	PW_COLORF m_Ambient;
+	PW_Texture* m_texture;
 
 	PW_FLOAT m_fMaxZ;
 	PW_FLOAT m_fMinZ;
+	bool m_bUseLight;
+	bool m_bUseTexture;
 };
 
 //#endif
