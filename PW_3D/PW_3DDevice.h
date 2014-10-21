@@ -131,6 +131,7 @@ private:
 
 	int m_bShow;
 	bool m_bShowAll;
+	int m_bWrite;
 	//VE
 };
 

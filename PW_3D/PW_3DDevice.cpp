@@ -20,6 +20,8 @@ PW_3DDevice::~PW_3DDevice()
 
 bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 {
+	m_bWrite = 0;
+	freopen("d:\\out.txt", "w", stdout);
 	m_hWnd = hWnd;
 	m_hEdit = hEdit;
 	m_iHeight = iHeight;
@@ -284,6 +286,10 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 			fV1 += fIncrementv1;
 
 		}
+		if (m_bWrite < 10)
+		{
+			printf("point x:%f,y:%f,u:%f,v:%f\n", fx, fy, fU1, fV1);
+		}
 		fLp1 = fLp1 + fIncrementlp1;
 
 		fU1 += fIncrementu1;
@@ -295,6 +301,10 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 		//fr += fIncrementr;
 		//fg += fIncrementg;
 		//fb += fIncrementb;
+		if (m_bWrite < 2)
+		{
+			printf("point x:%f,y:%f,u:%f,v:%f\n", fx, fy, fU1, fV1);
+		}
 		if (ROUND(fy) < 0 || ROUND(fy) >= m_iHeight || ROUND(fx) <0 || ROUND(fx) >= m_iWidth)
 		{
 			continue;
@@ -616,6 +626,7 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3)
 {
 
+	
 	PW_POINT3D pps[3];
 	pps[0] = point1;
 	if (point2.y < pps[0].y)
@@ -634,7 +645,17 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		i--;
 	}
 	pps[i + 1] = point3;
-	
+	m_bWrite ++;
+	if (m_bWrite < 2)
+	{
+		printf("draw triangel:\n");
+		for (int i = 0; i < 3;++i)
+		{
+			printf("point %d:== x :%f, y :%f, u :%f, v :%f\n",i ,pps[i].x, pps[i].y, pps[i].u, pps[i].v);
+		}
+		
+	}
+
 	int dy1 = ROUND(pps[1].y) - ROUND(pps[0].y);
 	int dy2 = ROUND(pps[2].y) - ROUND(pps[0].y);
 
