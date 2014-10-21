@@ -286,10 +286,7 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 			fV1 += fIncrementv1;
 
 		}
-		if (m_bWrite < 10)
-		{
-			printf("point x:%f,y:%f,u:%f,v:%f\n", fx, fy, fU1, fV1);
-		}
+
 		fLp1 = fLp1 + fIncrementlp1;
 
 		fU1 += fIncrementu1;
