@@ -27,7 +27,7 @@ PW_Texture g_PWTexture;
 
 void RenderScene();
 void Release();
-#define WNDWIDTH 1200
+#define WNDWIDTH 800
 #define WNDHEIGHT 800
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
@@ -165,6 +165,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HDC hdc;
 	PW_FLOAT d = 5;
 	PW_FLOAT dr = PI / 100.f;
+	INT nWidth ; // width of client area
+	INT nHeight ; // height of client area
 	switch (message)
 	{
 	case WM_COMMAND:
@@ -235,7 +237,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			g_PWCamera.Roll(dr);
 			break;
 		case 'b':
-			g_PWCamera.Roll(-dr);
+			g_PW3DDevice.SwitchShowAll();
+			//g_PWCamera.Roll(-dr);
 			break;
 		case 'z':
 			b_gStopRotate = !b_gStopRotate;
@@ -253,6 +256,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			g_PW3DDevice.SetDrawStyle();
 			break;
 		}
+		break;
+	case WM_SIZE:
+		nWidth = LOWORD(lParam); // width of client area
+		nHeight = HIWORD(lParam); // height of client area
+		
+		g_PW3DDevice.Release();
+		g_PW3DDevice.Create(hWnd, nWidth, nHeight, hWnd);
 		break;
 	case  WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
@@ -296,7 +306,7 @@ void RenderScene()
 	static PW_FLOAT fr = 0;
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
-		if (g_PWTexture.LoadBitmap("d:\\tietu3.bmp"))
+		if (g_PWTexture.LoadBitmap("d:\\tietu2.bmp"))
 		{
 			g_PW3DDevice.SetTexture(&g_PWTexture);
 		}
@@ -316,31 +326,49 @@ void RenderScene()
 		{
 			{0,3,1},
 			{3,2,1},
-			{1,2,5},
-			{2,6,5},
+			{1,2,6},
+			{1,6,5},
 			{5,6,4},
 			{6,7,4},
-			{4,7,0},
-			{7,3,0},
-			{3,7,2},
-			{7,6,2},
-			{4,0,5},
-			{0,1,5}
+			{4,7,3},
+			{4,3,0},
+			{3,7,6},
+			{3,6,2},
+			{4,0,1},
+			{4,1,5}
 		};
 		PW_FLOAT uvs[12][6]=
 		{
-			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.9, 0.1, 0.1, 0.9, 0.9 },
-			{ 0.1, 0.1, 0.9, 0.1, 0.9, 0.9 },
+			{ 0., 1, 0., 0., 1, 1 },
+			{ 0., 0., 1, 0., 1, 1 },
+
+			{ 0., 1, 0., 0., 1, 0 },
+			{ 0., 1, 1, 0., 1, 1 },
+
+			{ 0., 1, 0., 0., 1, 1 },
+			{ 0., 0., 1, 0., 1, 1 },
+			
+			{ 0., 1, 0., 0., 1, 1 },
+			{ 0., 1, 1, 0.1, 1, 1 },
+			
+			{ 0., 1, 0., 0., 1, 1 },
+			{ 0., 1, 1, 0., 1, 1 },
+			
+			{ 0., 1, 0., 0, 1, 1 },
+			{ 0., 1, 1, 0, 1, 1 },
+			
+			//{ 0., 1, 0., 0., 1, 1 },
+			//{ 0, 0., 1, 0, 1, 1 },
+			//{ 0., 1, 0., 0., 1, 1 },
+			//{ 0, 0., 1, 0, 1, 1 },
+			//{ 0., 1, 0., 0., 1, 1 },
+			//{ 0, 0., 1, 0, 1, 1 },
+			//{ 0., 1, 0., 0., 1, 1 },
+			//{ 0, 0., 1, 0, 1, 1 },
+			//{ 0., 1, 0., 0., 1, 1 },
+			//{ 0, 0., 1, 0, 1, 1 },
+			//{ 0., 1, 0., 0., 1, 1 },
+			//{ 0, 0., 1, 0, 1, 1 },
 		};
 		for (int i = 0; i < 12;i++)
 		{
@@ -376,7 +404,7 @@ void RenderScene()
 	}
 	if (!b_gStopRotate)
 	{
-		fr += PI / 5000;
+		fr += PI / 2000;
 		if (fr >= 2 * PI)
 		{
 			fr -= 2 * PI;
@@ -389,7 +417,7 @@ void RenderScene()
 	
 	//mesh 1
 	PW_Matrix4D rotatemat;
-	PW_RotateByXMatrix(rotatemat, PI / 4.0f);
+	PW_RotateByXMatrix(rotatemat, 0 *PI / 4.0f);
 	PW_Matrix4D wordmat, wordmat1;
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
@@ -401,16 +429,16 @@ void RenderScene()
 	g_PW3DDevice.SetWorldTransform(wordmat);
 	PW_ViewMatrix(wordmat, PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 	g_PW3DDevice.SetViewTransform(wordmat);
-	PW_ProjMatrix(wordmat, PI / 2, 1, 1, 1000);
+	PW_ProjMatrix(wordmat, PI / 4, g_PW3DDevice.m_fHeight / g_PW3DDevice.m_fWidth, 1, 1000);
 	g_PW3DDevice.SetProjTransform(wordmat);
-	PW_ViewPortMatrix(wordmat, WNDWIDTH, WNDHEIGHT);
+	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
 	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
 	
-	PW_RotateByXMatrix(rotatemat, PI / 4.0f);
+	PW_RotateByXMatrix(rotatemat, 0 * PI / 4.0f);
 	
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
@@ -423,12 +451,12 @@ void RenderScene()
 	g_PW3DDevice.SetWorldTransform(rotatemat);
 	PW_ViewMatrix(wordmat, PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 	g_PW3DDevice.SetViewTransform(wordmat);
-	PW_ProjMatrix(wordmat, PI / 2, 1, 1, 1000);
+	PW_ProjMatrix(wordmat, PI / 4, g_PW3DDevice.m_fHeight / g_PW3DDevice.m_fWidth, 1, 1000);
 	g_PW3DDevice.SetProjTransform(wordmat);
-	PW_ViewPortMatrix(wordmat, WNDWIDTH, WNDHEIGHT);
+	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
-	g_PW3DDevice.DrawMesh(g_PWMesh);
+	//g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	g_PW3DDevice.Update();
 }

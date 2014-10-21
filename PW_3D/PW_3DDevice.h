@@ -67,11 +67,18 @@ public:
 			m_bUseTexture = true;
 		}
 	}
+	
+	void SwitchShowAll(){m_bShowAll = !m_bShowAll;}
+
 	void EnableLight(bool bUse){m_bUseLight = bUse;}
 	void SwitchTextFilter(){ m_bUseBiliner = !m_bUseBiliner; }
 	void SetCamera(PW_Camera* car){ m_Camera = car; }
+
+	PW_Vector4D GetOriPos(PW_FLOAT x, PW_FLOAT y, PW_FLOAT z);
 	PW_3DDevice();
 	~PW_3DDevice();
+	PW_FLOAT m_fWidth;
+	PW_FLOAT m_fHeight;
 protected:
 	void Clear(PW_COLOR pwcolor, PW_FLOAT pwzbuffer);
 	//void DrawPoint(PW_POINT point, PW_COLOR pwcolor);
@@ -91,6 +98,7 @@ private:
 	HWND m_hWnd;
 	int m_iWidth;
 	int m_iHeight;
+
 	HBITMAP m_hBitmap;
 	DWORD* m_pBitBuffer;
 	PW_FLOAT* m_pZBuffer;
@@ -119,6 +127,11 @@ private:
 	bool m_bUseLight;
 	bool m_bUseTexture;
 	bool m_bUseBiliner;
+	PW_FLOAT m_fAspect;
+
+	int m_bShow;
+	bool m_bShowAll;
+	//VE
 };
 
 //#endif

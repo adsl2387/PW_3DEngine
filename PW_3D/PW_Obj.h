@@ -214,6 +214,9 @@ struct PW_Texture
 		
 		if (x >= bih.biWidth || y >= bih.biHeight || x < 0 || y < 0)
 		{
+			r = 0;
+			g = 0;
+			b = 0;
 			return ;
 		}
 		if (bih.biBitCount == 24)
@@ -255,14 +258,31 @@ struct PW_Texture
 		}
 		return ret;
 	}
+	
+	//u v×ªx y
+	inline void GetXY(PW_FLOAT u, PW_FLOAT v, PW_FLOAT& x, PW_FLOAT& y)
+	{
+		v = 1 - v;
+		x = (u * (bih.biWidth - 1));
+		y = (v * (bih.biHeight - 1));
+	}
 
 	inline PW_COLOR GetColor(PW_FLOAT u, PW_FLOAT v)
 	{
 		v = 1 - v;
-		PW_INT x = ROUND(u * bih.biWidth);
-		PW_INT y = ROUND(v * bih.biHeight);
+		PW_INT x = ROUND(u * (bih.biWidth - 1));
+		PW_INT y = ROUND(v * (bih.biHeight - 1));
 		return GetColorI(x, y);
 	}
+
+	//µ¥µã
+	//inline PW_COLOR GetColor(PW_FLOAT fx, PW_FLOAT fy)
+	//{
+	//	PW_INT x = ROUND(fx);
+	//	PW_INT y = ROUND(fy);
+	//	return GetColorI(x, y);
+	//}
+
 	PW_BYTE * pBuffer;
 	BITMAPINFOHEADER bih;
 	PW_INT iSpan;

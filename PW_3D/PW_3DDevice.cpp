@@ -7,10 +7,6 @@ PW_3DDevice::PW_3DDevice()
 	m_pZBuffer = NULL;
 	m_hWnd = NULL;
 	m_hBitmap = NULL;
-	m_iFps = 0;
-	m_4dBuffersize = 256;
-	m_v4dBuffer = new PW_Vector4D[m_4dBuffersize];
-	m_vNormalsBuffer = new PW_Vector3D[m_4dBuffersize];
 	m_ds = wireframe;
 	m_bUseMaterial = false;
 	m_bUseLight = false;
@@ -28,6 +24,9 @@ bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 	m_hEdit = hEdit;
 	m_iHeight = iHeight;
 	m_iWidth = iWidth;
+	m_fHeight = iHeight;
+	m_fWidth = iWidth;
+	m_fAspect = iWidth / PW_FLOAT(iHeight);
 	HDC hDc = GetDC(m_hWnd);
 	BITMAPINFO bi;
 	memset(&bi, 0, sizeof(bi));
@@ -47,6 +46,11 @@ bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 	DWORD* dtmp = reinterpret_cast<DWORD*>(&ftmp);
 	DWORD tmp = *dtmp;
 	QuadMemSet(m_pZBuffer, iHeight * iWidth * sizeof(DWORD), tmp);
+	m_iFps = 0;
+	m_4dBuffersize = 256;
+	m_v4dBuffer = new PW_Vector4D[m_4dBuffersize];
+	m_vNormalsBuffer = new PW_Vector3D[m_4dBuffersize];
+	m_bShow = 0;
 	return true;
 }
 
@@ -194,6 +198,11 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 	{
 		return;
 	}
+	m_bShow++;
+	if (!m_bShowAll && m_bShow % 4 != 0)
+	{
+		return;
+	}
 	point1.y = m_iHeight - point1.y;
 	point2.y = m_iHeight - point2.y;
 	int dx = ROUND(point2.x) - ROUND(point1.x);
@@ -315,6 +324,7 @@ void PW_3DDevice::DrawLine(PW_POINT3D point1, PW_POINT3D point2, int isolid)
 	{
 		return;
 	}
+
 	point1.y = m_iHeight - point1.y;
 	point2.y = m_iHeight - point2.y;
 	int dx = ROUND(point2.x) - ROUND(point1.x);
@@ -423,10 +433,15 @@ void PW_3DDevice::DrawLine(PW_POINT3D point1, PW_POINT3D point2, int isolid)
 
 void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 {
+	m_bShow = 0;
 	PW_Matrix4D tran;
 	PW_Matrix4D tran1;
 	PW_MatrixProduct4D(m_Camera->GetViewMat(), m_worldMatrix, tran);
 	//PW_MatrixProduct4D(m_projMatrix, tran, tran1);
+	if (!m_v4dBuffer)
+	{
+		return;
+	}
 	for (int i = 0; i < mesh.pointcount;++i)
 	{
 
@@ -622,6 +637,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 	
 	int dy1 = ROUND(pps[1].y) - ROUND(pps[0].y);
 	int dy2 = ROUND(pps[2].y) - ROUND(pps[0].y);
+
 	int cury = ROUND(pps[0].y);
 	PW_POINT3D leftPoint, rightPoint;
 	if (dy1 > 0)
@@ -656,8 +672,8 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 			PW_SWAP(fIncrementv1, fIncrementv2, fTmp);
 
 		}
-		PW_FLOAT fXl = pps[0].x;
-		PW_FLOAT fXr = pps[0].x;
+		PW_FLOAT fXl = (pps[0].x);
+		PW_FLOAT fXr = (pps[0].x);
 		PW_FLOAT fZl = pps[0].z;
 		PW_FLOAT fZr = pps[0].z;
 		
@@ -766,7 +782,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 	if (dy2 != 0 && dy2 > dy1)
 	{
 		dy1 = ROUND(pps[2].y) - ROUND(leftPoint.y);
-		dy2 = ROUND(pps[2].y) - ROUND(rightPoint.y);
+		dy2 = ROUND(pps[2].y) - ROUND(rightPoint.y) ;
 		PW_FLOAT fIncrementx1 = (pps[2].x - leftPoint.x) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementx2 = (pps[2].x - rightPoint.x) / PW_FLOAT(dy2);
 		PW_FLOAT fIncrementz1 = (pps[2].z - leftPoint.z) / PW_FLOAT(dy1);
@@ -790,8 +806,8 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		PW_FLOAT fCurR2 = PW_RGBA_R(rightPoint.pwColor);
 		PW_FLOAT fCurG2 = PW_RGBA_G(rightPoint.pwColor);
 		PW_FLOAT fCurB2 = PW_RGBA_B(rightPoint.pwColor);
-		PW_FLOAT fx1 = leftPoint.x;
-		PW_FLOAT fx2 = rightPoint.x;
+		PW_FLOAT fx1 = (leftPoint.x);
+		PW_FLOAT fx2 = (rightPoint.x);
 		PW_FLOAT fz1 = leftPoint.z;
 		PW_FLOAT fz2 = rightPoint.z;
 		PW_COLORF flp1 = leftPoint.fP;
@@ -845,17 +861,17 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 				DrawLine(p1, p2);
 		}
 	}
-	//if (m_bUseTexture)
-	//{
-	//	DrawLineTexture(point1, point2);
-	//	DrawLineTexture(point2, point3);
-	//	DrawLineTexture(point3, point1);
-	//}
-	//else
-	//{
-	//	DrawLine(point1, point2);
-	//	DrawLine(point2, point3);
-	//	DrawLine(point3, point1);
-	//}
-	
+}
+
+PW_Vector4D PW_3DDevice::GetOriPos(PW_FLOAT x, PW_FLOAT y, PW_FLOAT z)
+{
+	PW_Vector3D v3d;
+	PW_FLOAT x1 = (x + x) / m_fWidth - 1.0f;
+	PW_FLOAT y1 = 1.0f - (y + y) / m_fHeight;
+	PW_FLOAT z1 = (z + z) - 1.0f;
+	v3d.z = this->m_projMatrix[2][3] / (z1 - this->m_projMatrix[2][2]);
+	v3d.x = x1 * v3d.z;
+	v3d.y = y1 * v3d.z;
+	v3d.Normalize();	
+	return v3d;
 }

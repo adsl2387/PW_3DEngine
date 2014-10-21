@@ -108,10 +108,11 @@ void PW_ProjMatrix(PW_Matrix4D& m, PW_FLOAT fAngle, PW_FLOAT fRate, PW_FLOAT fNe
 	m.Zero();
 	PW_FLOAT sx, sy;
 	
-	sx = tan(fAngle / 2) * fNear;
-	sx = 1 / sx;
+	sx = tan(fAngle / 2) ;
+	sx = 1 / sx ;
+	//sx *= fRate;
 	sy = sx;
-	m[0][0] = fNear * sx;
+	m[0][0] =  sx;
 	m[1][1] = m[0][0];
 	m[2][2] = (fNear + fFar) / (fFar - fNear);
 	m[2][3] = 2 * fFar * fNear / (fNear - fFar);
@@ -121,7 +122,8 @@ void PW_ProjMatrix(PW_Matrix4D& m, PW_FLOAT fAngle, PW_FLOAT fRate, PW_FLOAT fNe
 void PW_ViewPortMatrix(PW_Matrix4D& m, PW_FLOAT fWidth, PW_FLOAT fHeight)
 {
 	m.Zero();
-	m[0][0] = fWidth / 2;
+	PW_FLOAT fr = fHeight / fWidth;
+	m[0][0] = fWidth / 2 * fr ;
 	m[0][3] = fWidth / 2;
 	m[1][1] = -fHeight / 2;
 	m[1][3] = fHeight / 2;
