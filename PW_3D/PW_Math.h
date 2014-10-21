@@ -121,6 +121,7 @@ struct PW_Vector4D
 	PW_FLOAT z;
 	PW_FLOAT w;
 
+
 	PW_Vector4D(PW_FLOAT fx = 0.f, PW_FLOAT fy=0.f, PW_FLOAT fz=0.f, PW_FLOAT fw = 1.f)
 		:x(fx),y(fy),z(fz),w(fw)
 	{}

@@ -103,7 +103,16 @@ protected:
 
 	inline PW_FLOAT GetViewZ(PW_FLOAT z)
 	{
-		return z - m_projMatrix[2][2];
+		PW_FLOAT z1 = (z + z) - 1.0f;
+		z1 = this->m_projMatrix[2][3] / (z1 - this->m_projMatrix[2][2]);
+		return z1;
+	}
+
+	inline PW_FLOAT GetViewPortZ(PW_FLOAT z)
+	{
+		PW_FLOAT z1 = this->m_projMatrix[2][3] / z + this->m_projMatrix[2][2];
+		z1 = z1 / 2.0 + 0.5f;
+		return z1;
 	}
 private:
 	PW_Camera* m_Camera;
