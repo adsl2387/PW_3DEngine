@@ -93,6 +93,18 @@ protected:
 	void DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3);
 	void Present();
 	
+	inline PW_FLOAT GetValueOfZBuffer(PW_INT x, PW_INT y){ return m_pZBuffer[y * m_iWidth + x]; }
+	inline void SetValueOfZBuffer(PW_INT x, PW_INT y, PW_FLOAT v){ m_pZBuffer[y * m_iWidth + x] = v; }
+	inline void SetValueOfCBuffer(PW_INT x, PW_INT y, PW_COLOR v)
+	{
+		y = m_iHeight - 1 - y;
+		m_pBitBuffer[y * m_iWidth + x] = v;
+	}
+
+	inline PW_FLOAT GetViewZ(PW_FLOAT z)
+	{
+		return z - m_projMatrix[2][2];
+	}
 private:
 	PW_Camera* m_Camera;
 	HWND m_hWnd;

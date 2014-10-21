@@ -58,7 +58,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// 主消息循环:
 	//while (GetMessage(&msg, NULL, 0, 0))
 
-	
+	freopen("d:\\out.txt", "w", stdout);
 	while (TRUE)
 	{
 		if (PeekMessage(&msg, NULL,0, 0, PM_REMOVE))
@@ -306,7 +306,7 @@ void RenderScene()
 	static PW_FLOAT fr = 0;
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
-		if (g_PWTexture.LoadBitmap("d:\\tietu2.bmp"))
+		if (g_PWTexture.LoadBitmap("d:\\tietu3.bmp"))
 		{
 			g_PW3DDevice.SetTexture(&g_PWTexture);
 		}
