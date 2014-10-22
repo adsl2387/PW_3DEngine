@@ -347,7 +347,7 @@ void RenderScene()
 	static PW_FLOAT fr = 0;
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
-		if (g_PWTexture.LoadBitmap("d:\\tietu4.bmp"))
+		if (g_PWTexture.LoadBitmap("d:\\tietu3.bmp"))
 		{
 			g_PW3DDevice.SetTexture(&g_PWTexture);
 		}
@@ -356,7 +356,7 @@ void RenderScene()
 		buffer[0] = PW_POINT3D(0, 0, 0, PW_RGBA(255, 0, 0));
 		buffer[1] = PW_POINT3D(40, 0, 0, PW_RGBA(0, 255, 0));
 		buffer[2] = PW_POINT3D(40, 40, 0, PW_RGBA(0, 0, 255));
-		buffer[3] = PW_POINT3D(0, 40, 0, PW_RGBA(255, 255, 255));
+		buffer[3] = PW_POINT3D(0, 40, 0, PW_RGBA(255, 255, 0));
 		buffer[4] = PW_POINT3D(0, 0, 40, PW_RGBA(255, 0, 255));
 		buffer[5] = PW_POINT3D(40, 0, 40, PW_RGBA(0, 255, 255));
 		buffer[6] = PW_POINT3D(40, 40, 40, PW_RGBA(125, 125, 125));
@@ -445,7 +445,7 @@ void RenderScene()
 	}
 	if (!b_gStopRotate)
 	{
-		fr += PI / 2000;
+		fr += PI / 1000;
 		if (fr >= 2 * PI)
 		{
 			fr -= 2 * PI;
@@ -471,7 +471,7 @@ void RenderScene()
 	g_PW3DDevice.SetWorldTransform(wordmat);
 	PW_ViewMatrix(wordmat, PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 	g_PW3DDevice.SetViewTransform(wordmat);
-	PW_ProjMatrix(wordmat, PI / 4, g_PW3DDevice.m_fHeight / g_PW3DDevice.m_fWidth, 1, 1000);
+	PW_ProjMatrix(wordmat, PI / 4, 1.0f, 1, 1000);
 	g_PW3DDevice.SetProjTransform(wordmat);
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
@@ -485,7 +485,7 @@ void RenderScene()
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
 	PW_MatrixProduct4D(rotatemat, wordmat, wordmat1);
-	PW_RotateByYMatrix(rotatemat, fr * 10);
+	PW_RotateByYMatrix(rotatemat, fr * 2);
 	PW_MatrixProduct4D(rotatemat, wordmat1, wordmat);
 	PW_TranslationMatrix(wordmat1, 20, 20, 40);
 	PW_MatrixProduct4D(wordmat1, wordmat, rotatemat);
@@ -493,12 +493,12 @@ void RenderScene()
 	g_PW3DDevice.SetWorldTransform(rotatemat);
 	PW_ViewMatrix(wordmat, PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 	g_PW3DDevice.SetViewTransform(wordmat);
-	PW_ProjMatrix(wordmat, PI / 4, g_PW3DDevice.m_fHeight / g_PW3DDevice.m_fWidth, 1, 1000);
+	PW_ProjMatrix(wordmat, PI / 4,1.f, 1, 1000);
 	g_PW3DDevice.SetProjTransform(wordmat);
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
-	g_PW3DDevice.DrawMesh(g_PWMesh);
+	//g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	g_PW3DDevice.Update();
 }

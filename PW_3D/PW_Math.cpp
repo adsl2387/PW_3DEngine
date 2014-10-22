@@ -112,7 +112,7 @@ void PW_ProjMatrix(PW_Matrix4D& m, PW_FLOAT fAngle, PW_FLOAT fRate, PW_FLOAT fNe
 	sx = 1 / sx ;
 	//sx *= fRate;
 	sy = sx;
-	m[0][0] =  sx;
+	m[0][0] =  sx * fRate;
 	m[1][1] = m[0][0];
 	m[2][2] = (fNear + fFar) / (fFar - fNear);
 	m[2][3] = 2 * fFar * fNear / (fNear - fFar);
