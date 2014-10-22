@@ -169,9 +169,11 @@ struct PW_Texture
 	LPCSTR strFileName;
 	inline PW_COLOR BiLinerGetColor(PW_FLOAT u, PW_FLOAT v)
 	{
-		v = 1 - v;
-		PW_FLOAT x = u * bih.biWidth;
-		PW_FLOAT y = v * bih.biHeight;
+		//v = 1 - v;
+		PW_CLAMP(v, 0.f, 1.f);
+		PW_CLAMP(u, 0.f, 1.f);
+		PW_FLOAT x = u * (bih.biWidth - 1);
+		PW_FLOAT y = v * (bih.biHeight - 1);
 		PW_FLOAT x0 = PW_INT(x);
 		PW_FLOAT y0 = PW_INT(y);
 		PW_FLOAT x1 = x - x0;
@@ -194,11 +196,11 @@ struct PW_Texture
 		r += r11;
 		g += g11;
 		b += b11;
-		GetColorI(x0, y0 - 1, r3, r11, g11, b11);
+		GetColorI(x0, y0 + 1, r3, r11, g11, b11);
 		r += r11;
 		g += g11;
 		b += b11;
-		GetColorI(x0 + 1, y0 - 1, r4, r11, g11, b11);
+		GetColorI(x0 + 1, y0 + 1, r4, r11, g11, b11);
 		r += r11;
 		g += g11;
 		b += b11;
@@ -211,7 +213,6 @@ struct PW_Texture
 
 	inline void GetColorI(PW_INT x, PW_INT y, PW_FLOAT f, PW_INT& r,  PW_INT& g, PW_INT& b)
 	{
-		
 		if (x >= bih.biWidth || y >= bih.biHeight || x < 0 || y < 0)
 		{
 			r = 0;
@@ -219,6 +220,7 @@ struct PW_Texture
 			b = 0;
 			return ;
 		}
+		y = bih.biHeight - 1 - y;
 		if (bih.biBitCount == 24)
 		{
 			b = ROUND(pBuffer[y * (bih.biWidth * 3 + iSpan) + x * 3] * f);

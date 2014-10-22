@@ -347,7 +347,7 @@ void RenderScene()
 	static PW_FLOAT fr = 0;
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
-		if (g_PWTexture.LoadBitmap("d:\\tietu2.bmp"))
+		if (g_PWTexture.LoadBitmap("d:\\tietu4.bmp"))
 		{
 			g_PW3DDevice.SetTexture(&g_PWTexture);
 		}
@@ -430,14 +430,14 @@ void RenderScene()
 		mater.fP = 1;
 		mater.cAmbient = PW_COLORF(0., 0., 0., 0.);
 		mater.cDiffuse = PW_COLORF(1,1, 1);
-		mater.cSpecularReflection = PW_COLORF(0.8, 0.8, 0.8);
+		mater.cSpecularReflection = PW_COLORF(0.1, 0.1, 0.1);
 		g_PW3DDevice.SetMaterial(&mater);
 		PW_Light light;
 		light.iLightType = pw_lt_directionallight;
-		light.vDirection = PW_Vector3D(1, 1, 1);
+		light.vDirection = PW_Vector3D(0, 0, 1);
 		light.cSpecular = PW_COLORF(0.5, 0.5, 0.5);
 		light.cAmbient = PW_COLORF(0., 0., 0.);
-		light.cDiffuse = PW_COLORF(0.1, 0.1, 0.1);
+		light.cDiffuse = PW_COLORF(0.8, 0.8, 0.8);
 		g_PW3DDevice.AddLight(light);
 		g_PWCamera.Init(PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
@@ -453,7 +453,7 @@ void RenderScene()
 		//fr = 0.2013 * 2 * PI;
 		//fr = 0.7299 * 2 * PI;
 		//fr = 0;
-		//fr = PI / 2 * 3;
+		//fr = PI / 8 ;
 		g_PW3DDevice.SetHelpOutputInfo(fr);
 	}
 	
@@ -476,11 +476,11 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
-	//g_PW3DDevice.DrawMesh(g_PWMesh);
+	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
 	
-	PW_RotateByXMatrix(rotatemat,  PI / 4.0f);
+	PW_RotateByXMatrix(rotatemat, 1 * PI / 4.0f);
 	
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
