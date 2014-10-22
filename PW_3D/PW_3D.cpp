@@ -25,6 +25,20 @@ PW_Mesh g_PWMesh;
 PW_Camera g_PWCamera;
 PW_Texture g_PWTexture;
 
+
+struct MousePos
+{
+	int x;
+	int y;
+	bool bdown;
+	MousePos()
+	{
+		bdown = false;
+	}
+};
+
+MousePos g_Mouse;
+
 void RenderScene();
 void Release();
 #define WNDWIDTH 800
@@ -167,6 +181,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PW_FLOAT dr = PI / 100.f;
 	INT nWidth ; // width of client area
 	INT nHeight ; // height of client area
+	int newx,newy;
 	switch (message)
 	{
 	case WM_COMMAND:
@@ -221,27 +236,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case 'e':
 			g_PWCamera.MoveUpOrDown(d);
 			break;
-		case 'r':
-			g_PWCamera.Pitch(dr);
-			break;
-		case 'f':
-			g_PWCamera.Pitch(-dr);
-			break;
-		case 'x':
-			g_PWCamera.Yaw(dr);
-			break;
-		case 'c':
-			g_PWCamera.Yaw(-dr);
-			break;
-		case 'v':
-			g_PWCamera.Roll(dr);
-			break;
-		case 'b':
-			g_PW3DDevice.SwitchShowAll();
-			//g_PWCamera.Roll(-dr);
-			break;
+		//case 'r':
+		//	g_PWCamera.Pitch(dr);
+		//	break;
+		//case 'f':
+		//	g_PWCamera.Pitch(-dr);
+		//	break;
+		//case 'x':
+		//	g_PWCamera.Yaw(dr);
+		//	break;
+		//case 'c':
+		//	g_PWCamera.Yaw(-dr);
+		//	break;
+		//case 'v':
+		//	g_PWCamera.Roll(dr);
+		//	break;
+		//case 'b':
+		//	g_PW3DDevice.SwitchShowAll();
+		//	//g_PWCamera.Roll(-dr);
+		//	break;
 		case 'z':
 			b_gStopRotate = !b_gStopRotate;
+			break;
+		case 'x':
+			g_PW3DDevice.SwitchMaterial();
 			break;
 		case 'g':
 			g_PW3DDevice.SwitchLight();
@@ -256,6 +274,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			g_PW3DDevice.SetDrawStyle();
 			break;
 		}
+		break;
+	case WM_LBUTTONDOWN:
+		g_Mouse.bdown = true;
+		g_Mouse.x = LOWORD(lParam);
+		g_Mouse.y = HIWORD(lParam);
+		break;
+	case WM_LBUTTONUP:
+		g_Mouse.bdown = false;
+		g_Mouse.x = LOWORD(lParam);
+		g_Mouse.y = HIWORD(lParam);
+		
+		break;
+	case WM_MOUSEMOVE:
+		if (g_Mouse.bdown)
+		{
+			newx = LOWORD(lParam);
+			newy = HIWORD(lParam);
+			g_PWCamera.Yaw(PW_FLOAT(newx - g_Mouse.x) / -1000.f);
+			g_PWCamera.Pitch(PW_FLOAT(newy - g_Mouse.y) / -1000.f);
+			g_Mouse.x = newx;
+			g_Mouse.y = newy;
+		}
+
 		break;
 	case WM_SIZE:
 		nWidth = LOWORD(lParam); // width of client area
@@ -306,7 +347,7 @@ void RenderScene()
 	static PW_FLOAT fr = 0;
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
-		if (g_PWTexture.LoadBitmap("d:\\tietu3.bmp"))
+		if (g_PWTexture.LoadBitmap("d:\\tietu2.bmp"))
 		{
 			g_PW3DDevice.SetTexture(&g_PWTexture);
 		}
@@ -348,13 +389,13 @@ void RenderScene()
 			{ 0., 1, 0., 0., 1, 1 },
 			{ 0., 0., 1, 0., 1, 1 },
 			
-			{ 0., 1, 0., 0., 1, 1 },
-			{ 0., 1, 1, 0.1, 1, 1 },
-			
-			{ 0., 1, 0., 0., 1, 1 },
+			{ 0., 1, 0., 0., 1, 0 },
 			{ 0., 1, 1, 0., 1, 1 },
 			
-			{ 0., 1, 0., 0, 1, 1 },
+			{ 0., 1, 0., 0., 1, 0 },
+			{ 0., 1, 1, 0., 1, 1 },
+			
+			{ 0., 1, 0., 0, 1, 0 },
 			{ 0., 1, 1, 0, 1, 1 },
 			
 			//{ 0., 1, 0., 0., 1, 1 },
@@ -389,14 +430,14 @@ void RenderScene()
 		mater.fP = 1;
 		mater.cAmbient = PW_COLORF(0., 0., 0., 0.);
 		mater.cDiffuse = PW_COLORF(1,1, 1);
-		mater.cSpecularReflection = PW_COLORF(0.0, 0.0, 0.);
+		mater.cSpecularReflection = PW_COLORF(0.8, 0.8, 0.8);
 		g_PW3DDevice.SetMaterial(&mater);
 		PW_Light light;
 		light.iLightType = pw_lt_directionallight;
-		light.vDirection = PW_Vector3D(0, 0, 1);
+		light.vDirection = PW_Vector3D(1, 1, 1);
 		light.cSpecular = PW_COLORF(0.5, 0.5, 0.5);
 		light.cAmbient = PW_COLORF(0., 0., 0.);
-		light.cDiffuse = PW_COLORF(1, 1, 1);
+		light.cDiffuse = PW_COLORF(0.1, 0.1, 0.1);
 		g_PW3DDevice.AddLight(light);
 		g_PWCamera.Init(PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
@@ -412,12 +453,13 @@ void RenderScene()
 		//fr = 0.2013 * 2 * PI;
 		//fr = 0.7299 * 2 * PI;
 		//fr = 0;
+		//fr = PI / 2 * 3;
 		g_PW3DDevice.SetHelpOutputInfo(fr);
 	}
 	
 	//mesh 1
 	PW_Matrix4D rotatemat;
-	PW_RotateByXMatrix(rotatemat, 0 *PI / 4.0f);
+	PW_RotateByXMatrix(rotatemat,   PI / 4.0f);
 	PW_Matrix4D wordmat, wordmat1;
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
@@ -434,11 +476,11 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
-	g_PW3DDevice.DrawMesh(g_PWMesh);
+	//g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
 	
-	PW_RotateByXMatrix(rotatemat, 0 * PI / 4.0f);
+	PW_RotateByXMatrix(rotatemat,  PI / 4.0f);
 	
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
@@ -456,7 +498,7 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
-	//g_PW3DDevice.DrawMesh(g_PWMesh);
+	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	g_PW3DDevice.Update();
 }

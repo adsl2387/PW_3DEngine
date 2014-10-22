@@ -51,6 +51,8 @@ public:
 		
 	}
 
+	void SwitchMaterial(){m_bUseMaterial = !m_bUseMaterial;}
+
 	void SwitchLight(){ m_bUseLight = !m_bUseLight; }
 
 	void SwitchTexture(){ m_bUseTexture = !m_bUseTexture; }
