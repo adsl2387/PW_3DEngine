@@ -1,3 +1,4 @@
+#pragma once
 #include "PW_Math.h"
 
 class PW_Camera

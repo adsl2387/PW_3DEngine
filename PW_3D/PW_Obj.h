@@ -1,5 +1,3 @@
-//#ifndef PW_OBJ
-//#define PW_OBJ
 #pragma once
 
 #include "PW_Math.h"

@@ -1,5 +1,3 @@
-//#ifndef PW_MATH
-//#define PW_MATH
 #pragma once
 #include <windows.h>
 #include <math.h>
@@ -7,6 +5,7 @@ typedef float PW_FLOAT;
 typedef int PW_INT;
 typedef double PW_DOUBLE;
 typedef unsigned char PW_BYTE;
+typedef int PW_BOOL;
 
 #define PI 3.1415926535898
 #define EPSILON 0.0000001
