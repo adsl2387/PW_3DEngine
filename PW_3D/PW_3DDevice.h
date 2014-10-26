@@ -150,7 +150,7 @@ private:
 	bool m_bUseLight;
 	bool m_bUseTexture;
 	bool m_bUseBiliner;
-	PW_FLOAT m_fAspect;
+
 
 	int m_bShow;
 	bool m_bShowAll;

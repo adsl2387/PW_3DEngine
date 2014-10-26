@@ -28,7 +28,7 @@ bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 	m_iWidth = iWidth;
 	m_fHeight = iHeight;
 	m_fWidth = iWidth;
-	m_fAspect = iWidth / PW_FLOAT(iHeight);
+	
 	HDC hDc = GetDC(m_hWnd);
 	BITMAPINFO bi;
 	memset(&bi, 0, sizeof(bi));
@@ -116,7 +116,6 @@ void PW_3DDevice::Release()
 
 void PW_3DDevice::Update()
 {
-	// TODO: 在此添加任意绘图代码...
 	Present();
 	Clear(PW_RGBA(125, 125, 125), 1.f);
 }
