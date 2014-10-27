@@ -463,6 +463,13 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	dir = dir - point1;
 	PW_Vector3D h;
 	PW_CrossProduct(v, u, h);
+	PW_FLOAT dotRes = PW_DotProduct(h, dir);
+
+	//消除背面
+	if (dotRes <= 0)
+	{
+		return;
+	}
 	PW_Vector4D p1, p2, p3;
 	PW_Matrix4D tan;
 	p1 = point1.MatrixProduct(m_projMatrix);
@@ -474,15 +481,15 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	p1.MatrixProduct(m_viewportMatrix);
 	p2.MatrixProduct(m_viewportMatrix);
 	p3.MatrixProduct(m_viewportMatrix);
-	PW_FLOAT dotRes = PW_DotProduct(h, dir);
-
-		ComputeLight(point1, m_Camera->GetViewMat());
-		ComputeLight(point2, m_Camera->GetViewMat());
-		ComputeLight(point3, m_Camera->GetViewMat());
+	
+	//计算光强
+	ComputeLight(point1, m_Camera->GetViewMat());
+	ComputeLight(point2, m_Camera->GetViewMat());
+	ComputeLight(point3, m_Camera->GetViewMat());
 	
 	if (ds == wireframe)
 	{
-		if (dotRes > 0)
+		//if (dotRes > 0)
 		{
 			DrawLine(PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP)
 				, PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP));
@@ -494,7 +501,7 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	}
 	else
 	{
-		if (dotRes > 0)
+		//if (dotRes > 0)
 		{
 			DrawTriangle(PW_POINT3D(p1, point1.pwColor, PW_Vector3D(), point1.u, point1.v, point1.fP)
 				, PW_POINT3D(p2, point2.pwColor, PW_Vector3D(), point2.u, point2.v, point2.fP)
@@ -541,8 +548,8 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 	{
 		PW_FLOAT fIncrementx1 =(pps[1].x - pps[0].x) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementx2 = (pps[2].x - pps[0].x) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementz1 = (1.0 / fZ1 - 1.0 / fZ) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementz2 = (1.0 /fZ2 - 1.0 / fZ) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementz1 = (1.0f / fZ1 - 1.0f / fZ) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementz2 = (1.0f /fZ2 - 1.0f / fZ) / PW_FLOAT(dy2);
 		PW_FLOAT fIncrementr1 = ((PW_FLOAT)PW_RGBA_R(pps[1].pwColor) / fZ1 - (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementg1 = ((PW_FLOAT)PW_RGBA_G(pps[1].pwColor) / fZ1- (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementb1 = ((PW_FLOAT)PW_RGBA_B(pps[1].pwColor) / fZ1- (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
@@ -768,4 +775,125 @@ PW_Vector4D PW_3DDevice::GetOriPos(PW_FLOAT x, PW_FLOAT y, PW_FLOAT z)
 	v3d.y = y1 * v3d.z;
 	v3d.Normalize();	
 	return v3d;
+}
+
+void PW_3DDevice::DrawCircle(PW_FLOAT x, PW_FLOAT y, PW_FLOAT r, PW_COLOR pwColor /* = PW_RGB(255 ,255,255) */)
+{
+	r = ROUND(r);
+	x = ROUND(x);
+	y = ROUND(y);
+	PW_FLOAT r2 = r * r;
+	PW_FLOAT xk = x - r;
+	PW_FLOAT yk = y;
+	SetPixel(xk, yk, pwColor);
+	yk -= 1.f;
+	while (y - yk <= x - xk)
+	{
+		if ((xk - x  + 0.5f )* (xk - x + 0.5f) + (yk - y) * (yk - y) - r2 <= 0)
+		{
+			SetPixel(xk, yk, pwColor);
+		}
+		else
+		{
+			xk += 1.f;
+			SetPixel(xk, yk, pwColor);
+		}
+		yk -= 1.f;
+	}
+	while (xk <= x)
+	{
+		if ((xk - x )* (xk - x) + (yk - 0.5f - y) * (yk - 0.5f - y) - r2 >= 0)
+		{
+			SetPixel(xk, yk, pwColor);
+		}
+		else
+		{
+			yk -= 1.f;
+			SetPixel(xk, yk, pwColor);
+		}
+		xk += 1.f;
+	}
+	
+	while (xk - x <= y - yk)
+	{
+		if ((xk - x)* (xk - x) + (yk + 0.5f - y) * (yk + 0.5f - y) - r2 <= 0)
+		{
+			SetPixel(xk, yk, pwColor);
+		}
+		else
+		{
+			yk += 1.f;
+			SetPixel(xk, yk, pwColor);
+		}
+		xk += 1.f;
+	}
+	while (yk <= y)
+	{
+		if ((xk - x + 0.5f)* (xk - x + 0.5f) + (yk - y) * (yk - y) - r2 >= 0)
+		{
+			SetPixel(xk, yk, pwColor);
+		}
+		else
+		{
+			xk += 1.f;
+			SetPixel(xk, yk, pwColor);
+		}
+		yk += 1.f;
+	}
+	//xia ban yuan
+	yk = y + 1.f;
+	xk = x - r;
+	while (yk - y <= x - xk)
+	{
+		if ((xk - x + 0.5f)* (xk - x + 0.5f) + (yk - y) * (yk - y) - r2 <= 0)
+		{
+			SetPixel(xk, yk, pwColor);
+		}
+		else
+		{
+			xk += 1.f;
+			SetPixel(xk, yk, pwColor);
+		}
+		yk += 1.f;
+	}
+	while (xk <= x)
+	{
+		if ((xk - x)* (xk - x) + (yk + 0.5f - y) * (yk + 0.5f - y) - r2 >= 0)
+		{
+			SetPixel(xk, yk, pwColor);
+		}
+		else
+		{
+			yk += 1.f;
+			SetPixel(xk, yk, pwColor);
+		}
+		xk += 1.f;
+	}
+
+	while (xk - x <= yk - y)
+	{
+		if ((xk - x)* (xk - x) + (yk - 0.5f - y) * (yk - 0.5f - y) - r2 <= 0)
+		{
+			SetPixel(xk, yk, pwColor);
+		}
+		else
+		{
+			yk -= 1.f;
+			SetPixel(xk, yk, pwColor);
+		}
+		xk += 1.f;
+	}
+	while (yk >= y)
+	{
+		if ((xk - x + 0.5f)* (xk - x + 0.5f) + (yk - y) * (yk - y) - r2 >= 0)
+		{
+			SetPixel(xk, yk, pwColor);
+		}
+		else
+		{
+			xk += 1.f;
+			SetPixel(xk, yk, pwColor);
+		}
+		yk -= 1.f;
+	}
 }

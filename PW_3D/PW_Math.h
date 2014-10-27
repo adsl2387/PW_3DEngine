@@ -7,7 +7,7 @@ typedef double PW_DOUBLE;
 typedef unsigned char PW_BYTE;
 typedef int PW_BOOL;
 
-#define PI 3.1415926535898
+#define PI 3.1415926535898f
 #define EPSILON 0.0000001
 #define ROUND(x) ((int)((x) + 0.5f))
 typedef DWORD PW_COLOR;

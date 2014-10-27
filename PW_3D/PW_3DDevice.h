@@ -24,6 +24,8 @@ public:
 	void Update();
 	void DrawMesh(PW_Mesh& mesh);
 
+	void DrawCircle(PW_FLOAT x, PW_FLOAT y, PW_FLOAT r, PW_COLOR pwColor = PW_RGB(255,255,255));
+
 	void SetWorldTransform(PW_Matrix4D& m){ m_worldMatrix = m; }
 	void SetViewTransform(PW_Matrix4D& m){ m_viewMatrix = m; }
 	void SetProjTransform(PW_Matrix4D& m){ m_projMatrix = m; }
@@ -113,8 +115,18 @@ protected:
 	inline PW_FLOAT GetViewPortZ(PW_FLOAT z)
 	{
 		PW_FLOAT z1 = this->m_projMatrix[2][3] / z + this->m_projMatrix[2][2];
-		z1 = z1 / 2.0 + 0.5f;
+		z1 = z1 / 2.0f + 0.5f;
 		return z1;
+	}
+
+	inline void SetPixel(PW_INT x, PW_INT y, PW_COLOR pwColor)
+	{
+		y = m_iHeight - y - 1;
+		if (y >= m_iHeight || y < 0 || x >= m_iWidth || x < 0)
+		{
+			return;
+		}
+		this->m_pBitBuffer[y * m_iWidth + x] = pwColor;
 	}
 private:
 	PW_Camera* m_Camera;
