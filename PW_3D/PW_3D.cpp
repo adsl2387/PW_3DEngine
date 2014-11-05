@@ -498,8 +498,9 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
-	//g_PW3DDevice.DrawMesh(g_PWMesh);
-	g_PW3DDevice.DrawCircle(250, 250, 100);
+	g_PW3DDevice.DrawMesh(g_PWMesh);
+//	g_PW3DDevice.DrawCircle(250, 250, 100);
+	g_PW3DDevice.DrawEllipse(250, 250, 150, 100);
 	g_PW3DDevice.Update();
 }
 

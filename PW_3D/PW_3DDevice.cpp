@@ -777,6 +777,94 @@ PW_Vector4D PW_3DDevice::GetOriPos(PW_FLOAT x, PW_FLOAT y, PW_FLOAT z)
 	return v3d;
 }
 
+void PW_3DDevice::DrawEllipse(PW_FLOAT x , PW_FLOAT y, PW_FLOAT a, PW_FLOAT b, PW_COLOR pwColor /* = PW_RGB(255 , 255, 255)*/)
+{
+	PW_FLOAT fCurx = 0.f;
+	PW_FLOAT fCury = -b;
+	SetPixel(x + fCurx, y + fCury, pwColor);
+	PW_FLOAT fdydx = b * fCurx / a / fCury;
+	while (fabs(fdydx) < 1.f)
+	{
+		fCurx += 1.f;
+		if (fCurx * fCurx / (a * a) + (fCury + 0.5f) * (fCury + 0.5f) / (b * b) - 1.f > 0)
+		{
+			fCury += 1.f;
+		}
+		SetPixel(x + fCurx, y + fCury, pwColor);
+		fdydx = b * b* fCurx / (a * a) / fCury;
+	}
+	while (fCury <= 0)
+	{
+		fCury += 1.f;
+		if ((fCurx + 0.5f) * (fCurx + 0.5f) / (a * a) + (fCury ) * (fCury ) / (b * b) - 1.f < 0)
+		{
+			fCurx += 1.f;
+		}
+		SetPixel(x + fCurx, y + fCury, pwColor);
+	}
+	fdydx = b * b* fCurx / (a * a) / fCury;
+	while (fabs(fdydx) > 1.f)
+	{
+		fCury += 1.f;
+		if ((fCurx - 0.5f) * (fCurx - 0.5f) / (a * a) + (fCury)* (fCury) / (b * b) - 1.f > 0)
+		{
+			fCurx -= 1.f;
+		}
+		SetPixel(x + fCurx, y + fCury, pwColor);
+		fdydx = b * b* fCurx / (a * a) / fCury;
+	}
+	while (fCurx >= 0.f)
+	{
+		fCurx -= 1.f;
+		if (fCurx * fCurx / (a * a) + (fCury + 0.5f) * (fCury + 0.5f) / (b * b) - 1.f < 0)
+		{
+			fCury += 1.f;
+		}
+		SetPixel(x + fCurx, y + fCury, pwColor);
+	}
+	fdydx = b * b* fCurx / (a * a) / fCury;
+	while (fabs(fdydx) < 1.f)
+	{
+		fCurx -= 1.f;
+		if (fCurx * fCurx / (a * a) + (fCury - 0.5f) * (fCury - 0.5f) / (b * b) - 1.f > 0)
+		{
+			fCury -= 1.f;
+		}
+		SetPixel(x + fCurx, y + fCury, pwColor);
+		fdydx = b * b* fCurx / (a * a) / fCury;
+	}
+	while (fCury >= 0.f)
+	{
+		fCury -= 1.f;
+		if ((fCurx - 0.5f) * (fCurx - 0.5f) / (a * a) + (fCury)* (fCury) / (b * b) - 1.f < 0)
+		{
+			fCurx -= 1.f;
+		}
+		SetPixel(x + fCurx, y + fCury, pwColor);
+	}
+	fdydx = b * b* fCurx / (a * a) / fCury;
+	while (fabs(fdydx) > 1.f)
+	{
+
+		fCury -= 1.f;
+		if ((fCurx + 0.5f) * (fCurx + 0.5f) / (a * a) + (fCury) * (fCury) / (b * b) - 1.f > 0)
+		{
+			fCurx += 1.f;
+		}
+		SetPixel(x + fCurx, y + fCury, pwColor);
+		fdydx = b * b* fCurx / (a * a) / fCury;
+	}
+	while (fCurx <= 0.f)
+	{
+		fCurx += 1.f;
+		if ((fCurx) * (fCurx) / (a * a) + (fCury - 0.5f)* (fCury - 0.5f) / (b * b) - 1.f < 0)
+		{
+			fCury -= 1.f;
+		}
+		SetPixel(x + fCurx, y + fCury, pwColor);
+	}
+}
+
 void PW_3DDevice::DrawCircle(PW_FLOAT x, PW_FLOAT y, PW_FLOAT r, PW_COLOR pwColor /* = PW_RGB(255 ,255,255) */)
 {
 	r = ROUND(r);

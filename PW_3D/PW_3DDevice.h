@@ -24,6 +24,8 @@ public:
 	void Update();
 	void DrawMesh(PW_Mesh& mesh);
 
+	void DrawEllipse(PW_FLOAT x, PW_FLOAT y, PW_FLOAT a, PW_FLOAT b, PW_COLOR pwColor = PW_RGB(255, 255, 255));
+
 	void DrawCircle(PW_FLOAT x, PW_FLOAT y, PW_FLOAT r, PW_COLOR pwColor = PW_RGB(255,255,255));
 
 	void SetWorldTransform(PW_Matrix4D& m){ m_worldMatrix = m; }
