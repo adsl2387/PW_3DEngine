@@ -164,3 +164,56 @@ void PW_Vector4D::MatrixProduct(PW_Matrix4D& mat)
 	z = fz;
 	w = fw;
 }
+
+PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_TrianglePlane& plane, PW_Vector3D& inserctionPoint
+	, PW_Vector3D& vRefDir1, PW_Vector3D& vRefDir2, PW_FLOAT fRef2, PW_Vector3D& vNormalll)
+{
+	vDelta.Normalize();
+	PW_Vector3D e1 = plane.p2 - plane.p1;
+	PW_Vector3D e2 = plane.p3 - plane.p2;
+	PW_Vector3D e3 = plane.p1 - plane.p3;
+	PW_Vector3D vNorm;
+	PW_CrossProduct(e1, e2, vNorm);
+	PW_Vector3D vp = plane.p1 - vStart;
+	if (PW_DotProduct(vDelta, vNorm) >= 0.f)
+	{
+		//射线照到的是背面
+		return PW_FALSE;
+	}
+	PW_FLOAT u;
+	PW_FLOAT dot1 = PW_DotProduct(vp, vNorm);
+	PW_FLOAT dot2 = PW_DotProduct(vDelta, vNorm);
+	u = dot1 / dot2;
+	if (u < 0)
+	{
+		return PW_FALSE;
+	}
+	PW_Vector3D inserp = vStart + vDelta * u;
+	//
+	PW_Vector3D d1 = inserp - plane.p1;
+	PW_Vector3D d2 = inserp - plane.p2;
+	PW_Vector3D d3 = inserp - plane.p3;
+	PW_Vector3D cross1, cross2, cross3;
+	PW_CrossProduct(e1, d1, cross1);
+	PW_CrossProduct(e2, d2, cross2);
+	PW_CrossProduct(e3, d3, cross3);
+	if (PW_DotProduct(cross1, cross2) < 0 || PW_DotProduct(cross2, cross3) < 0 ||
+		PW_DotProduct(cross1, cross3) < 0)
+	{
+		return PW_FALSE;
+	}
+	vNorm.Normalize();
+	vNormalll = vNorm;
+	vRefDir1 = vDelta - vNorm * 2 * (PW_DotProduct(vDelta, vNorm));
+	vRefDir1.Normalize();
+	
+	if (fRef2 > 0)
+	{
+		PW_Vector3D vvTmp = (vNorm * -1 - vDelta) * fRef2;
+		vRefDir2 = (vNorm * -1) + vvTmp;
+		vRefDir2.Normalize();
+	}
+	
+	inserctionPoint = inserp;
+	return PW_TRUE;
+}

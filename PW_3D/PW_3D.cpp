@@ -441,7 +441,10 @@ void RenderScene()
 		g_PW3DDevice.AddLight(light);
 		g_PWCamera.Init(PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
-		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.0, 0.0, 0.0));
+		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.1, 0.1, 0.1));
+		g_PWMesh.SetMaterial(mater);
+		g_PW3DDevice.SetRayTrace();
+
 	}
 	if (!b_gStopRotate)
 	{
@@ -453,7 +456,7 @@ void RenderScene()
 		//fr = 0.2013 * 2 * PI;
 		//fr = 0.7299 * 2 * PI;
 		//fr = 0;
-		//fr = PI / 8 ;
+		fr = PI / 8 ;
 		g_PW3DDevice.SetHelpOutputInfo(fr);
 	}
 	
@@ -500,8 +503,8 @@ void RenderScene()
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
 	g_PW3DDevice.DrawMesh(g_PWMesh);
 //	g_PW3DDevice.DrawCircle(250, 250, 100);
-	g_PW3DDevice.DrawEllipse(250, 250, 150, 100);
-	g_PW3DDevice.Update();
+	//g_PW3DDevice.DrawEllipse(250, 250, 150, 100);
+	g_PW3DDevice.Render();
 }
 
 void Release()

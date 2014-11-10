@@ -21,6 +21,12 @@ public:
 	bool Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit);
 	void Release();
 	
+	void Render();
+
+	void SwitchRayTrace(){ m_bRayTrace = !m_bRayTrace; }
+
+	void SetRayTrace(){ m_bRayTrace = true; }
+
 	void Update();
 	void DrawMesh(PW_Mesh& mesh);
 
@@ -86,6 +92,13 @@ public:
 	PW_FLOAT m_fWidth;
 	PW_FLOAT m_fHeight;
 protected:
+
+	void RayTrace();
+
+	void RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth);
+
+	PW_COLORF RayComputerLight(PW_RayTraceNode* pNode);
+
 	void Clear(PW_COLOR pwcolor, PW_FLOAT pwzbuffer);
 	//void DrawPoint(PW_POINT point, PW_COLOR pwcolor);
 	//void DrawLine(PW_POINTF point1, PW_POINTF point2, PW_COLOR color, int isolid = 1);
@@ -107,6 +120,9 @@ protected:
 		m_pBitBuffer[y * m_iWidth + x] = v;
 	}
 
+
+	//投影矩阵和屏幕矩阵的特殊性直接算
+	//屏幕Z到观察Z
 	inline PW_FLOAT GetViewZ(PW_FLOAT z)
 	{
 		PW_FLOAT z1 = (z + z) - 1.0f;
@@ -114,11 +130,23 @@ protected:
 		return z1;
 	}
 
+	//观察Z到屏幕Z
 	inline PW_FLOAT GetViewPortZ(PW_FLOAT z)
 	{
 		PW_FLOAT z1 = this->m_projMatrix[2][3] / z + this->m_projMatrix[2][2];
 		z1 = z1 / 2.0f + 0.5f;
 		return z1;
+	}
+
+	//屏幕坐标到观察坐标
+	inline PW_Vector3D GetViewPos(PW_Vector3D& vScreen)
+	{
+		PW_Vector3D vRes;
+		vRes.z = GetViewZ(vScreen.z);
+		vRes.x = (vScreen.x - this->m_viewportMatrix[0][3]) / this->m_viewportMatrix[0][0] * vRes.z / this->m_projMatrix[0][0];
+		vRes.y = (vScreen.y - this->m_viewportMatrix[1][3]) / this->m_viewportMatrix[1][1] * vRes.z / this->m_projMatrix[1][1];
+		
+		return vRes;
 	}
 
 	inline void SetPixel(PW_INT x, PW_INT y, PW_COLOR pwColor)
@@ -132,6 +160,7 @@ protected:
 	}
 private:
 	PW_Camera* m_Camera;
+	int m_nCurNodePos;
 	HWND m_hWnd;
 	int m_iWidth;
 	int m_iHeight;
@@ -151,6 +180,12 @@ private:
 	PW_FLOAT m_fRotate;
 	PW_Vector4D* m_v4dBuffer;
 	PW_Vector3D* m_vNormalsBuffer;
+	PW_INT* m_nIndexBuffer;
+	PW_FLOAT* m_fUBuffer;
+	PW_FLOAT* m_fVBuffer;
+	PW_INT m_curV4DPos;
+	PW_INT m_curIndexPos;
+
 	PW_Material m_material;
 	bool m_bUseMaterial;
 	int m_4dBuffersize;
@@ -161,11 +196,12 @@ private:
 
 	PW_FLOAT m_fMaxZ;
 	PW_FLOAT m_fMinZ;
+	PW_INT m_nMaxDepth;
 	bool m_bUseLight;
 	bool m_bUseTexture;
 	bool m_bUseBiliner;
-
-
+	vector<PW_Mesh> m_meshs;
+	PW_BOOL m_bRayTrace;
 	int m_bShow;
 	bool m_bShowAll;
 	int m_bWrite;

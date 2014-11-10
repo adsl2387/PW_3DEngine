@@ -152,3 +152,68 @@ bool PW_Texture::LoadBitmap(LPCSTR lpszFile)
 	free((void*)pbmfh);
 	return true;
 }
+
+PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2)
+{
+	for (int i = 0; i < indexcount;i++)
+	{
+		int index1 = indexbuffer[i][0];
+		int index2 = indexbuffer[i][1];
+		int index3 = indexbuffer[i][2];
+		PW_TrianglePlane tp;
+		
+		tp.p1 = pNowBuffer[index1];
+		tp.p2 = pNowBuffer[index2];
+		tp.p3 = pNowBuffer[index3];
+		PW_Vector3D pinsert;
+		PW_Vector3D vRef1, vRef2;
+		PW_FLOAT fRer = 0;
+		PW_INT nRes = 0;
+		PW_Vector3D vNorrr;
+		if (RayInserctionPlane(lightRay.vStart, lightRay.vDir, tp, pinsert, vRef1, vRef2, fRer, vNorrr))
+		{
+			nRes++;
+			reflectLight1.vStart = pinsert;
+			reflectLight1.vDir = vRef1;
+			reflectLight1.cAmbient = material.cAmbient;
+			reflectLight1.cDiffuse = material.cDiffuse;
+			reflectLight1.cEmission = material.cEmission;
+			reflectLight1.cSpecularReflection = material.cSpecularReflection;
+			reflectLight1.vNormal = vNorrr;
+			if (fRer > 0)
+			{
+				reflectLight2.vDir = vRef2;
+				reflectLight2.vStart = pinsert;
+				reflectLight2.cAmbient = material.cAmbient;
+				reflectLight2.cDiffuse = material.cDiffuse;
+				reflectLight2.cEmission = material.cEmission;
+				reflectLight2.cSpecularReflection = material.cSpecularReflection;
+				reflectLight2.vNormal = vNorrr;
+				nRes++;
+			}
+			return nRes;
+		}	
+	}
+	return 0;
+}
+
+void PW_Mesh::ComputeCurVertex()
+{
+	PW_Matrix4D tran = absoluteTM;
+	for (int i = 0; i < pointcount; ++i)
+	{
+		pNowBuffer[i] = buffer[i];
+		PW_Vector4D vTmp = buffer[i].MatrixProduct(tran);
+		//pNowBuffer[i] = buffer[i].MatrixProduct(tran);
+		PW_Vector3D vNor = buffer[i].vNormal.MatrixProduct(tran);
+		
+		PW_Vector3D pwOri;
+		pwOri = pwOri.MatrixProduct(tran);
+		vNor = vNor - pwOri;
+		vNor.Normalize();
+		pNowBuffer[i].vNormal = vNor;
+		pNowBuffer[i].x = vTmp.x;
+		pNowBuffer[i].y = vTmp.y;
+		pNowBuffer[i].z = vTmp.z;
+ 	}
+}

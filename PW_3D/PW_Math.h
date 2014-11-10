@@ -6,6 +6,8 @@ typedef int PW_INT;
 typedef double PW_DOUBLE;
 typedef unsigned char PW_BYTE;
 typedef int PW_BOOL;
+#define PW_TRUE	1
+#define PW_FALSE	0
 
 #define PI 3.1415926535898f
 #define EPSILON 0.0000001
@@ -99,7 +101,28 @@ struct PW_Vector3D
 		return retv;
 	}
 
+	inline PW_Vector3D operator/ (PW_FLOAT fvalue)
+	{
+		PW_Vector3D retv;
+		retv.x = x / fvalue;
+		retv.y = y / fvalue;
+		retv.z = z / fvalue;
+		return retv;
+	}
+
+	//inline void operator= (PW_Vector4D& v4d)
+	//{
+	//	x = v4d.x / v4d.w;
+	//	y = v4d.y / v4d.w;
+	//	z = v4d.z / v4d.w;
+	//}
+
 	PW_Vector4D MatrixProduct(PW_Matrix4D& mat);
+
+	inline PW_FLOAT GetLen()
+	{
+		return sqrt(x * x + y * y + z* z);
+	}
 
 	void Normalize()
 	{
@@ -120,7 +143,7 @@ struct PW_Vector4D
 	PW_FLOAT z;
 	PW_FLOAT w;
 
-
+	PW_COLOR pwColor;
 	PW_Vector4D(PW_FLOAT fx = 0.f, PW_FLOAT fy=0.f, PW_FLOAT fz=0.f, PW_FLOAT fw = 1.f)
 		:x(fx),y(fy),z(fz),w(fw)
 	{}
@@ -227,6 +250,13 @@ struct PW_Line
 	PW_Vector3D dirction;
 };
 
+struct PW_TrianglePlane
+{
+	PW_Vector3D p1;
+	PW_Vector3D p2;
+	PW_Vector3D p3;
+};
+
 struct PW_Plane
 {
 	PW_Vector3D oripoint;
@@ -267,5 +297,8 @@ inline void QuadMemSet(void* dst, int iSize, DWORD value)
 			rep stosd
 	}
 }
+
+PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, 
+	PW_TrianglePlane& plane, PW_Vector3D& inserctionPoint, PW_Vector3D& vRefDir1, PW_Vector3D& vRefDir2, PW_FLOAT fRef2, PW_Vector3D& vNormal);
 
 //#endif

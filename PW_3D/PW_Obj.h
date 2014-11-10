@@ -86,26 +86,85 @@ struct PW_Triangle
 	}
 };
 
+struct PW_AABB
+{
+	PW_Vector3D Mins;
+	PW_Vector3D Maxs;
+	PW_Vector3D Center;
+	PW_Vector3D Extents;
+
+	PW_AABB(PW_Vector3D minv, PW_Vector3D maxv)
+	{
+		Mins = minv;
+		Maxs = maxv;
+		Center = (Mins + Maxs) / 2;
+		Extents = Maxs - Center;
+	}
+
+	//PW_AABB(PW_Vector3D center, PW_Vector3D extents)
+	//{
+	//	Mins = center - extents;
+	//	Maxs = center + extents;
+	//	Center = center;
+	//	Extents = extents;
+	//}
+};
+
+struct PW_LightRay
+{
+	PW_COLORF cAmbient;
+	PW_COLORF cDiffuse;
+	PW_COLORF cEmission;
+	PW_COLORF cSpecularReflection;
+	PW_Vector3D vStart;
+	PW_Vector3D vDir;
+	PW_Vector3D vNormal;
+};
+
 struct PW_Mesh
 {
 	PW_Vertex* buffer;
 	PW_Triangle* indexbuffer;
+	PW_Vertex* pNowBuffer;
 	int pointcount;
-	//int* indexbuffer;
+	PW_Matrix4D absoluteTM;//ÊÀ½ç¾ØÕó * ¹Û²ì¾ØÕó
+	PW_Material material;
 	int indexcount;
-	PW_Mesh():buffer(NULL), indexbuffer(NULL), pointcount(0), indexcount(0)
+	PW_BOOL bHasMaterial;
+	PW_Mesh() :buffer(NULL), indexbuffer(NULL), pointcount(0), indexcount(0), bHasMaterial(PW_FALSE), pNowBuffer(NULL)
 	{}
 
+	PW_BOOL RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2);
+
+	void SetMaterial(PW_Material m)
+	{
+		material = m;
+		bHasMaterial = PW_TRUE;
+	}
 
 	void SetBuffer(PW_Vertex* pBuffer, PW_Triangle* pTriBuffer, int points, int indeces)
 	{
 		buffer = pBuffer;
-		//indexbuffer = pIndexBuffer;
+		if (points > pointcount)
+		{
+			if (pNowBuffer)
+			{
+				delete[] pNowBuffer;
+				pNowBuffer = NULL;
+			}
+		}
 		pointcount = points;
 		indexcount = indeces;
 		indexbuffer = pTriBuffer;
+		if (!pNowBuffer)
+		{
+			pNowBuffer = new PW_Vertex[points];
+		}
+
 		ComputeNormal();
 	}
+
+	void ComputeCurVertex();
 
 	int GetVertexCount(){ return pointcount; }
 
@@ -117,6 +176,8 @@ struct PW_Mesh
 		{
 			delete[] buffer;
 			buffer = NULL;
+			delete[] pNowBuffer;
+			pNowBuffer = NULL;
 		}
 		if (indexbuffer)
 		{
@@ -301,5 +362,16 @@ struct PW_Texture
 	}
 
 	bool LoadBitmap(LPCSTR strFile);
+};
+
+struct PW_RayTraceNode
+{
+	PW_LightRay Light;
+	PW_BOOL bInsert;
+	PW_RayTraceNode* pLeft;
+	PW_RayTraceNode* pRight;
+
+	PW_RayTraceNode() :pLeft(NULL), pRight(NULL), bInsert(PW_FALSE)
+	{}
 };
 //#endif
