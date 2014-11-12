@@ -153,8 +153,135 @@ bool PW_Texture::LoadBitmap(LPCSTR lpszFile)
 	return true;
 }
 
-PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2)
+PW_BOOL PW_Mesh::RayInsertAABB(PW_LightRay& lightRay)
 {
+	float lowt = 0.0f;
+	float t;
+	PW_BOOL hit = PW_FALSE;
+	PW_Vector3D hitpoint;
+	PW_Vector3D min = curAABB.Mins;
+	PW_Vector3D max = curAABB.Maxs;
+	PW_Vector3D rayorig = lightRay.vStart;
+	PW_Vector3D raydir = lightRay.vDir;
+
+	//先检查在盒子内
+	if (rayorig > min && max > rayorig)
+	{
+		//dist = 0;
+		return PW_TRUE;
+	}
+
+	//依次检查各面的相交情况
+	if (rayorig.x < min.x && raydir.x > 0)
+	{
+		t = (min.x - rayorig.x) / raydir.x;
+		if (t>0)
+		{
+			hitpoint = rayorig + raydir * t;
+			if (hitpoint.y >= min.y && hitpoint.y <= max.y && hitpoint.z >= min.z && hitpoint.z <= max.z && (!hit || t<lowt))
+			{
+				hit = PW_TRUE;
+				lowt = t;
+				return hit;
+			}
+		}
+	}
+
+	if (rayorig.x > max.x && raydir.x < 0)
+	{
+		t = (max.x - rayorig.x) / raydir.x;
+		if (t>0)
+		{
+			hitpoint = rayorig + raydir*t;
+			if (hitpoint.y > min.y && hitpoint.y <= max.y &&
+				hitpoint.z >= min.z && hitpoint.z <= max.z &&
+				(!hit || t < lowt))
+			{
+				hit = PW_TRUE;
+				lowt = t;
+				return hit;
+			}
+		}
+	}
+
+	if (rayorig.y<min.y && raydir.y>0)
+	{
+		t = (min.y - rayorig.y) / raydir.y;
+		if (t > 0)
+		{
+			hitpoint = rayorig + raydir*t;
+			if (hitpoint.x >= min.x && hitpoint.x <= max.x &&
+				hitpoint.z >= min.z && hitpoint.z <= max.z &&
+				(!hit || t < lowt))
+			{
+				hit = PW_TRUE;
+				lowt = t;
+				return hit;
+			}
+		}
+	}
+
+	if (rayorig.y > max.y && raydir.y < 0)
+	{
+		t = (max.y - rayorig.y) / raydir.y;
+		if (t > 0)
+		{
+			hitpoint = rayorig + raydir * t;
+			if (hitpoint.x >= min.x && hitpoint.x <= max.x &&
+				hitpoint.z >= min.z && hitpoint.z <= max.z &&
+				(!hit || t < lowt))
+			{
+				hit = PW_TRUE;
+				lowt = t;
+				return hit;
+			}
+		}
+	}
+
+	if (rayorig.z < min.z && raydir.z > 0)
+	{
+		t = (min.z - rayorig.z) / raydir.z;
+		if (t > 0)
+		{
+			hitpoint = rayorig + raydir * t;
+			if (hitpoint.x >= min.x && hitpoint.x <= max.x &&
+				hitpoint.y >= min.y && hitpoint.y <= max.y &&
+				(!hit || t < lowt))
+			{
+				hit = PW_TRUE;
+				lowt = t;
+				return hit;
+			}
+		}
+	}
+
+	if (rayorig.z > max.z && raydir.z < 0)
+	{
+		t = (max.z - rayorig.z) / raydir.z;
+		if (t > 0)
+		{
+			hitpoint = rayorig + raydir * t;
+			if (hitpoint.x >= min.x && hitpoint.x <= max.x &&
+				hitpoint.y >= min.y && hitpoint.y <= max.y &&
+				(!hit || t < lowt))
+			{
+				hit = PW_TRUE;
+				lowt = t;
+				return hit;
+			}
+		}
+	}
+
+	//dist = lowt;
+	return hit;
+}
+
+ PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2)
+{
+	if (!RayInsertAABB(lightRay))
+	{
+		return PW_FALSE;
+	}
 	for (int i = 0; i < indexcount;i++)
 	{
 		int index1 = indexbuffer[i][0];
@@ -180,6 +307,7 @@ PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, P
 			reflectLight1.cEmission = material.cEmission;
 			reflectLight1.cSpecularReflection = material.cSpecularReflection;
 			reflectLight1.vNormal = vNorrr;
+			reflectLight1.vOriDir = lightRay.vDir;
 			if (fRer > 0)
 			{
 				reflectLight2.vDir = vRef2;
@@ -189,6 +317,7 @@ PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, P
 				reflectLight2.cEmission = material.cEmission;
 				reflectLight2.cSpecularReflection = material.cSpecularReflection;
 				reflectLight2.vNormal = vNorrr;
+				reflectLight2.vOriDir = lightRay.vDir;
 				nRes++;
 			}
 			return nRes;
@@ -200,9 +329,12 @@ PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, P
 void PW_Mesh::ComputeCurVertex()
 {
 	PW_Matrix4D tran = absoluteTM;
+	PW_FLOAT minx, miny, minz, maxx, maxy, maxz;
+	
 	for (int i = 0; i < pointcount; ++i)
 	{
 		pNowBuffer[i] = buffer[i];
+		
 		PW_Vector4D vTmp = buffer[i].MatrixProduct(tran);
 		//pNowBuffer[i] = buffer[i].MatrixProduct(tran);
 		PW_Vector3D vNor = buffer[i].vNormal.MatrixProduct(tran);
@@ -215,5 +347,24 @@ void PW_Mesh::ComputeCurVertex()
 		pNowBuffer[i].x = vTmp.x;
 		pNowBuffer[i].y = vTmp.y;
 		pNowBuffer[i].z = vTmp.z;
+		if (i == 0)
+		{
+			minx = pNowBuffer[i].x;
+			miny = pNowBuffer[i].y;
+			minz = pNowBuffer[i].z;
+			maxx = pNowBuffer[i].x;
+			maxy = pNowBuffer[i].y;
+			maxz = pNowBuffer[i].z;
+		}
+		else
+		{
+			minx = min(pNowBuffer[i].x, minx);
+			miny = min(pNowBuffer[i].y, miny);
+			minz = min(pNowBuffer[i].z, minz);
+			maxx = max(pNowBuffer[i].x, maxx);
+			maxy = max(pNowBuffer[i].y, maxy);
+			maxz = max(pNowBuffer[i].z, maxz);
+			curAABB = PW_AABB(PW_Vector3D(minx, miny, minz), PW_Vector3D(maxx, maxy, maxz));
+		}
  	}
 }

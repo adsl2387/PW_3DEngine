@@ -270,6 +270,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case 'j':
 			g_PW3DDevice.SwitchTextFilter();
 			break;
+		case 'r':
+			g_PW3DDevice.SwitchRayTrace();
+			break;
 		default:
 			g_PW3DDevice.SetDrawStyle();
 			break;
@@ -429,8 +432,8 @@ void RenderScene()
 		PW_Material mater;
 		mater.fP = 1;
 		mater.cAmbient = PW_COLORF(0., 0., 0., 0.);
-		mater.cDiffuse = PW_COLORF(1,1, 1);
-		mater.cSpecularReflection = PW_COLORF(0.1, 0.1, 0.1);
+		mater.cDiffuse = PW_COLORF(0,0, 0);
+		mater.cSpecularReflection = PW_COLORF(0.8, 0.8, 0.8);
 		g_PW3DDevice.SetMaterial(&mater);
 		PW_Light light;
 		light.iLightType = pw_lt_directionallight;
@@ -456,7 +459,7 @@ void RenderScene()
 		//fr = 0.2013 * 2 * PI;
 		//fr = 0.7299 * 2 * PI;
 		//fr = 0;
-		fr = PI / 8 ;
+		//fr = PI / 8 ;
 		g_PW3DDevice.SetHelpOutputInfo(fr);
 	}
 	
@@ -479,7 +482,7 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
-	//g_PW3DDevice.DrawMesh(g_PWMesh);
+	g_PW3DDevice.DrawMesh(g_PWMesh);
 	
 	//mesh2
 	
@@ -501,7 +504,7 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
-	g_PW3DDevice.DrawMesh(g_PWMesh);
+//	g_PW3DDevice.DrawMesh(g_PWMesh);
 //	g_PW3DDevice.DrawCircle(250, 250, 100);
 	//g_PW3DDevice.DrawEllipse(250, 250, 150, 100);
 	g_PW3DDevice.Render();

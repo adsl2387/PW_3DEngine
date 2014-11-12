@@ -175,6 +175,7 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 	PW_Vector3D vNorm;
 	PW_CrossProduct(e1, e2, vNorm);
 	PW_Vector3D vp = plane.p1 - vStart;
+	//return PW_FALSE;
 	if (PW_DotProduct(vDelta, vNorm) >= 0.f)
 	{
 		//射线照到的是背面

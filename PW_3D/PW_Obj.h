@@ -92,6 +92,8 @@ struct PW_AABB
 	PW_Vector3D Maxs;
 	PW_Vector3D Center;
 	PW_Vector3D Extents;
+	PW_AABB()
+	{}
 
 	PW_AABB(PW_Vector3D minv, PW_Vector3D maxv)
 	{
@@ -119,6 +121,7 @@ struct PW_LightRay
 	PW_Vector3D vStart;
 	PW_Vector3D vDir;
 	PW_Vector3D vNormal;
+	PW_Vector3D vOriDir;
 };
 
 struct PW_Mesh
@@ -131,8 +134,11 @@ struct PW_Mesh
 	PW_Material material;
 	int indexcount;
 	PW_BOOL bHasMaterial;
+	PW_AABB curAABB;
 	PW_Mesh() :buffer(NULL), indexbuffer(NULL), pointcount(0), indexcount(0), bHasMaterial(PW_FALSE), pNowBuffer(NULL)
 	{}
+
+	PW_BOOL RayInsertAABB(PW_LightRay& lightRay);
 
 	PW_BOOL RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2);
 
@@ -208,6 +214,7 @@ struct PW_Light
 	PW_Vector3D vPosition;
 	PW_Vector3D vDirection;
 	PW_FLOAT fRange;
+	PW_Vector3D vCurDir;
 	PW_Light()
 	{
 		fAttenuation0 = 0;

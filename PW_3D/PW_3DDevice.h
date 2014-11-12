@@ -95,7 +95,7 @@ protected:
 
 	void RayTrace();
 
-	void RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth);
+	PW_COLORF RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth);
 
 	PW_COLORF RayComputerLight(PW_RayTraceNode* pNode);
 
@@ -120,6 +120,7 @@ protected:
 		m_pBitBuffer[y * m_iWidth + x] = v;
 	}
 
+	void UpdateCurLight();
 
 	//投影矩阵和屏幕矩阵的特殊性直接算
 	//屏幕Z到观察Z
@@ -143,6 +144,7 @@ protected:
 	{
 		PW_Vector3D vRes;
 		vRes.z = GetViewZ(vScreen.z);
+		//return vRes;
 		vRes.x = (vScreen.x - this->m_viewportMatrix[0][3]) / this->m_viewportMatrix[0][0] * vRes.z / this->m_projMatrix[0][0];
 		vRes.y = (vScreen.y - this->m_viewportMatrix[1][3]) / this->m_viewportMatrix[1][1] * vRes.z / this->m_projMatrix[1][1];
 		

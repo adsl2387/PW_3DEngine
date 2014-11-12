@@ -72,6 +72,11 @@ struct PW_Vector3D
 
 	PW_Vector3D(PW_Vector4D& v4d);
 
+	inline PW_BOOL operator>(PW_Vector3D& v3d)
+	{
+		return x > v3d.x && y > v3d.y && z > v3d.z;
+	}
+
 	void operator=(PW_Vector4D& v4d);
 
 	inline PW_Vector3D operator+ (PW_Vector3D& vec)

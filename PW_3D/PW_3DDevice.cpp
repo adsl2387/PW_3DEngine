@@ -1036,25 +1036,38 @@ void PW_3DDevice::DrawCircle(PW_FLOAT x, PW_FLOAT y, PW_FLOAT r, PW_COLOR pwColo
 	}
 }
 
+void PW_3DDevice::UpdateCurLight()
+{
+	for (int i = 0; i < m_vLights.size(); ++i)
+	{
+		PW_Vector3D lightdir;
+		if (m_vLights[i].iLightType == pw_lt_spotlight)
+		{
+		}
+		else if (m_vLights[i].iLightType == pw_lt_pointlight)
+		{
+			PW_Vector3D vP = m_vLights[i].vPosition.MatrixProduct(m_Camera->GetViewMat());
+			lightdir = vP;
+			m_vLights[i].vCurDir = vP;
+			//lightdir.Normalize();
+		}
+		else
+		{
+			PW_Vector3D vOri;
+			vOri = vOri.MatrixProduct(m_Camera->GetViewMat());
+			PW_Vector3D vP = m_vLights[i].vDirection.MatrixProduct(m_Camera->GetViewMat());
+			lightdir = vOri - vP;
+			lightdir.Normalize();
+			m_vLights[i].vCurDir = lightdir;
+		}
+	}
+}
+
 PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 {
 	if (!pNode)
 	{
-		return m_Ambient;
-	}
-	PW_COLORF fL = RayComputerLight(pNode->pLeft);
-	PW_COLORF fR = RayComputerLight(pNode->pRight);
-	if (pNode->pLeft)
-	{
-		PW_Vector3D pp = (pNode->Light.vStart - pNode->pLeft->Light.vStart);
-		
-		//fL = fL * (1.f / (pp.GetLen() + 1));
-	}
-	if (pNode->pRight)
-	{
-		PW_Vector3D pp = (pNode->Light.vStart - pNode->pRight->Light.vStart);
-
-		//fR = fR * (1.f / (pp.GetLen() + 1));
+		return PW_COLORF(0,0);
 	}
 	
 	PW_COLORF cAmbient, cDiffuse, cSpecular, cEmissive;
@@ -1073,28 +1086,27 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 		}
 		else if (m_vLights[i].iLightType == pw_lt_pointlight)
 		{
-			PW_Vector3D vP = m_vLights[i].vPosition.MatrixProduct(m_Camera->GetViewMat());
+			PW_Vector3D vP = m_vLights[i].vCurDir;
 			lightdir = vP - pNode->Light.vStart;
+			lightdir.Normalize();
 		}
 		else
 		{
-			PW_Vector3D vOri;
-			vOri = vOri.MatrixProduct(m_Camera->GetViewMat());
-			PW_Vector3D vP = m_vLights[i].vDirection.MatrixProduct(m_Camera->GetViewMat());
-			lightdir = vOri - vP;
+			lightdir = m_vLights[i].vCurDir;
 		}
-		lightdir.Normalize();
+		
 		PW_FLOAT fRes = PW_DotProduct(lightdir, pNode->Light.vNormal);
 		if (fRes > 0)
 		{
 			cD = cD + m_vLights[i].cDiffuse * fRes;
 		}
 		//相机总是在0,0,0
-		PW_Vector3D vP = pNode->Light.vDir * -1;
+		PW_Vector3D vP = pNode->Light.vOriDir * -1;
 		vP.Normalize();
 		vP = vP + lightdir;
+		vP.Normalize();
 		PW_FLOAT fTmp = PW_DotProduct(pNode->Light.vNormal, vP);
-		//fTmp = 1;// pow(fTmp, m_material.fP);
+		//fTmp =  pow(fTmp, 2);
 		if (fTmp > 0)
 		{
 			cS = cS + m_vLights[i].cSpecular * fTmp;
@@ -1107,37 +1119,44 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 	cSpecular = pNode->Light.cSpecularReflection * cS;
 
 	cRet = cAmbient + cDiffuse + cSpecular;
-	return fL + fR + cRet;
+	return cRet;
 }
 
 
 
-void PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth)
+PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth)
 {
+	PW_COLORF retColorf;
 	if (!pNode)
 	{
-		return;
+		return m_Ambient;
 	}
 	if (nDepth > m_nMaxDepth)
 	{
-		return;
+		return m_Ambient;
 	}
+	PW_BOOL bInsert = PW_FALSE;
 	for (int i = 0; i < m_meshs.size();i++)
 	{
 		PW_LightRay r1, r2;
-		PW_INT nRes = m_meshs[i].RayReflect(pNode->Light, r1, r2);
+		PW_INT nRes =  m_meshs[i].RayReflect(pNode->Light, r1, r2);
 		pNode->bInsert = PW_FALSE;
 		if (nRes > 0)
 		{
+			bInsert = PW_TRUE;
 			pNode->bInsert = PW_TRUE;
 			PW_RayTraceNode* pL = &g_Node[m_nCurNodePos++];
-			//memset(pL, 0, sizeof(PW_RayTraceNode));
+			
 			pL->pRight = NULL;
 			pL->pLeft = NULL;
 			pL->Light = r1;
 			pNode->pLeft = pL;
-			
-			RayTraceRec(pL, nDepth + 1);
+			PW_COLORF fT = RayComputerLight(pL);
+			PW_COLORF fL = RayTraceRec(pL, nDepth + 1);
+			PW_Vector3D pp = (pNode->Light.vStart - pL->Light.vStart);
+
+			fT = fT * (80.f / (pp.GetLen() + 1));
+			PW_COLORF fR;
 			if (nRes > 1)
 			{
 				PW_RayTraceNode* pR = &g_Node[m_nCurNodePos++];
@@ -1146,10 +1165,19 @@ void PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth)
 				pR->pLeft = NULL;
 				pR->pRight = NULL;
 				pNode->pRight = pR;
-				RayTraceRec(pR, nDepth + 1);
+				fR = RayTraceRec(pR, nDepth + 1);
+				//PW_Vector3D pp = (pNode->Light.vStart - pR->Light.vStart);
+
+				//fR = fR * (80.f / (pp.GetLen() + 1));
 			}
+			retColorf = retColorf + fL + fR + fT;
 		}
 	}
+	if (!bInsert)
+	{
+		return m_Ambient;
+	}
+	return retColorf;
 }
 
 void PW_3DDevice::RayTrace()
@@ -1158,6 +1186,7 @@ void PW_3DDevice::RayTrace()
 	{
 		m_meshs[i].ComputeCurVertex();
 	}
+	UpdateCurLight();
 	for (int x = 0; x < this->m_iWidth; x++)
 	{
 		for (int y =  0; y < this->m_iHeight; y++)
@@ -1173,9 +1202,9 @@ void PW_3DDevice::RayTrace()
 			Root->pRight = NULL;
 			Root->Light.vStart = raystart;
 			Root->Light.vDir = rayend - raystart;
-			//Root->Light.vDir.Normalize();
-			RayTraceRec(Root, 0);
-			PW_COLORF fr = RayComputerLight(Root);
+			Root->Light.vDir.Normalize();
+			
+			PW_COLORF fr = RayTraceRec(Root, 0);//RayComputerLight(Root);
 			PW_COLOR pwc = fr * PW_COLOR(PW_RGB(255, 255, 255));
 			SetPixel(x, y, pwc);
 			
