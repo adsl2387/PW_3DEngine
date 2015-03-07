@@ -276,14 +276,53 @@ PW_BOOL PW_Mesh::RayInsertAABB(PW_LightRay& lightRay)
 	return hit;
 }
 
+PW_BOOL PW_Mesh::RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir)
+{
+	PW_LightRay lightRay;
+	lightRay.vStart = vStart;
+	lightRay.vDir = vDir;
+	if (!RayInsertAABB(lightRay))
+	{
+		return PW_FALSE;
+	}
+	for (int i = 0; i < indexcount; i++)
+	{
+
+		int index1 = indexbuffer[i][0];
+		int index2 = indexbuffer[i][1];
+		int index3 = indexbuffer[i][2];
+		PW_TrianglePlane tp;
+
+		tp.p1 = pNowBuffer[index1];
+		tp.p2 = pNowBuffer[index2];
+		tp.p3 = pNowBuffer[index3];
+		tp.n1 = pNowBuffer[index1].vNormal;
+		tp.n2 = pNowBuffer[index2].vNormal;
+		tp.n3 = pNowBuffer[index3].vNormal;
+		PW_Vector3D pinsert;
+		PW_Vector3D vRef1, vRef2;
+		PW_FLOAT fRer = 0;
+		PW_INT nRes = 0;
+		PW_Vector3D vNorrr;
+		if (RayInserctionPlane(lightRay.vStart, lightRay.vDir, tp, pinsert, vRef1, vRef2, fRer, vNorrr, bUseVertexNormal))
+		{
+			return PW_TRUE;
+		}
+	}
+	return PW_FALSE;
+}
+
  PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2)
 {
 	if (!RayInsertAABB(lightRay))
 	{
 		return PW_FALSE;
 	}
+	PW_FLOAT fMinLen = 100000000.f;
+	PW_INT ret = 0;
 	for (int i = 0; i < indexcount;i++)
 	{
+
 		int index1 = indexbuffer[i][0];
 		int index2 = indexbuffer[i][1];
 		int index3 = indexbuffer[i][2];
@@ -292,13 +331,29 @@ PW_BOOL PW_Mesh::RayInsertAABB(PW_LightRay& lightRay)
 		tp.p1 = pNowBuffer[index1];
 		tp.p2 = pNowBuffer[index2];
 		tp.p3 = pNowBuffer[index3];
+		tp.n1 = pNowBuffer[index1].vNormal;
+		tp.n2 = pNowBuffer[index2].vNormal;
+		tp.n3 = pNowBuffer[index3].vNormal;
 		PW_Vector3D pinsert;
 		PW_Vector3D vRef1, vRef2;
-		PW_FLOAT fRer = 0;
+		PW_FLOAT fRer = material.fRef;
 		PW_INT nRes = 0;
 		PW_Vector3D vNorrr;
-		if (RayInserctionPlane(lightRay.vStart, lightRay.vDir, tp, pinsert, vRef1, vRef2, fRer, vNorrr))
+		if (RayInserctionPlane(lightRay.vStart, lightRay.vDir, tp, pinsert, vRef1, vRef2, fRer, vNorrr, bUseVertexNormal))
 		{
+			//if (i < 2)
+			//{
+			//	//printf("erron");
+			//}
+			PW_FLOAT fLen = (lightRay.vStart - pinsert).GetLen();
+			if (fLen < fMinLen && fLen > EPSILON * 1000.f)
+			{
+				fMinLen = fLen;
+			}
+			else
+			{
+				continue;
+			}
 			nRes++;
 			reflectLight1.vStart = pinsert;
 			reflectLight1.vDir = vRef1;
@@ -320,10 +375,10 @@ PW_BOOL PW_Mesh::RayInsertAABB(PW_LightRay& lightRay)
 				reflectLight2.vOriDir = lightRay.vDir;
 				nRes++;
 			}
-			return nRes;
+			ret = nRes;
 		}	
 	}
-	return 0;
+	return ret;
 }
 
 void PW_Mesh::ComputeCurVertex()

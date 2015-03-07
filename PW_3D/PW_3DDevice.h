@@ -95,7 +95,7 @@ protected:
 
 	void RayTrace();
 
-	PW_COLORF RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth);
+	PW_COLORF RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT& nOutTotalD);
 
 	PW_COLORF RayComputerLight(PW_RayTraceNode* pNode);
 
@@ -140,15 +140,19 @@ protected:
 	}
 
 	//屏幕坐标到观察坐标
-	inline PW_Vector3D GetViewPos(PW_Vector3D& vScreen)
+	inline void GetViewPos(PW_Vector3D& vScreen, PW_Vector3D& vRes)
 	{
-		PW_Vector3D vRes;
-		vRes.z = GetViewZ(vScreen.z);
+		PW_FLOAT xx, yy, zz;
+		xx = vScreen.x;
+		yy = vScreen.y;
+		zz = vScreen.z;
+		//PW_Vector3D vRes;
+		vRes.z = GetViewZ(zz);
 		//return vRes;
-		vRes.x = (vScreen.x - this->m_viewportMatrix[0][3]) / this->m_viewportMatrix[0][0] * vRes.z / this->m_projMatrix[0][0];
-		vRes.y = (vScreen.y - this->m_viewportMatrix[1][3]) / this->m_viewportMatrix[1][1] * vRes.z / this->m_projMatrix[1][1];
+		vRes.x = (xx - this->m_viewportMatrix[0][3]) / this->m_viewportMatrix[0][0] * vRes.z / this->m_projMatrix[0][0];
+		vRes.y = (yy - this->m_viewportMatrix[1][3]) / this->m_viewportMatrix[1][1] * vRes.z / this->m_projMatrix[1][1];
 		
-		return vRes;
+		//return vRes;
 	}
 
 	inline void SetPixel(PW_INT x, PW_INT y, PW_COLOR pwColor)

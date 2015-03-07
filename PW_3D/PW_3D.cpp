@@ -22,6 +22,7 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 PW_3DDevice g_PW3DDevice;
 PW_Mesh g_PWMesh;
+PW_Mesh g_PWMesh2;
 PW_Camera g_PWCamera;
 PW_Texture g_PWTexture;
 
@@ -72,7 +73,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// 主消息循环:
 	//while (GetMessage(&msg, NULL, 0, 0))
 
-	freopen("d:\\out.txt", "w", stdout);
+#ifdef _DEBUG
+	AllocConsole();
+	freopen("conout$", "w", stdout);
+#endif
+	//freopen("d:\\out.txt", "w", stdout);
 	while (TRUE)
 	{
 		if (PeekMessage(&msg, NULL,0, 0, PM_REMOVE))
@@ -365,10 +370,19 @@ void RenderScene()
 		buffer[6] = PW_POINT3D(40, 40, 40, PW_RGBA(125, 125, 125));
 		buffer[7] = PW_POINT3D(0, 40, 40, PW_RGBA(123, 0, 0));
 		
+		PW_POINT3D* buffer1 = new PW_POINT3D[8];
+		buffer1[0] = PW_POINT3D(0, 0, 0, PW_RGBA(255, 0, 0));
+		buffer1[1] = PW_POINT3D(10, 0, 0, PW_RGBA(0, 255, 0));
+		buffer1[2] = PW_POINT3D(10, 10, 0, PW_RGBA(0, 0, 255));
+		buffer1[3] = PW_POINT3D(0, 10, 0, PW_RGBA(255, 255, 0));
+		buffer1[4] = PW_POINT3D(0, 0, 10, PW_RGBA(255, 0, 255));
+		buffer1[5] = PW_POINT3D(10, 0, 10, PW_RGBA(0, 255, 255));
+		buffer1[6] = PW_POINT3D(10, 10, 10, PW_RGBA(125, 125, 125));
+		buffer1[7] = PW_POINT3D(0, 10, 10, PW_RGBA(123, 0, 0));
 		PW_Triangle* indexbuffer = new PW_Triangle[12];
 		int indexbbb[12][3] = 
 		{
-			{0,3,1},
+			{1,0,3},
 			{3,2,1},
 			{1,2,6},
 			{1,6,5},
@@ -414,7 +428,8 @@ void RenderScene()
 			//{ 0., 1, 0., 0., 1, 1 },
 			//{ 0, 0., 1, 0, 1, 1 },
 		};
-		for (int i = 0; i < 12;i++)
+		int numface = 12;
+		for (int i = 0; i < numface; i++)
 		{
 			indexbuffer[i][0] = indexbbb[i][0];
 			indexbuffer[i][1] = indexbbb[i][1];
@@ -427,26 +442,34 @@ void RenderScene()
 			indexbuffer[i].v3 = uvs[i][5];
 		}
 	
-		g_PWMesh.SetBuffer(buffer, indexbuffer, 8, 12);
-	
+		g_PWMesh.SetBuffer(buffer, indexbuffer, 8, numface);
+		g_PWMesh2.SetBuffer(buffer1, indexbuffer, 8, numface);
 		PW_Material mater;
 		mater.fP = 1;
+		mater.fRef = 0.f;
 		mater.cAmbient = PW_COLORF(0., 0., 0., 0.);
-		mater.cDiffuse = PW_COLORF(0,0, 0);
-		mater.cSpecularReflection = PW_COLORF(0.8, 0.8, 0.8);
+		mater.cDiffuse = PW_COLORF(0.9,0.9, 0.9);
+		mater.cSpecularReflection = PW_COLORF(0.5, 0.5, 0.5);
 		g_PW3DDevice.SetMaterial(&mater);
 		PW_Light light;
 		light.iLightType = pw_lt_directionallight;
 		light.vDirection = PW_Vector3D(0, 0, 1);
-		light.cSpecular = PW_COLORF(0.5, 0.5, 0.5);
-		light.cAmbient = PW_COLORF(0., 0., 0.);
-		light.cDiffuse = PW_COLORF(0.8, 0.8, 0.8);
+		light.cSpecular = PW_COLORF(0.6, 0.6, 0.6);
+		light.cAmbient = PW_COLORF(0.1, 0.1, 0.1);
+		light.cDiffuse = PW_COLORF(0.9, 0.9, 0.9);
 		g_PW3DDevice.AddLight(light);
 		g_PWCamera.Init(PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
 		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.1, 0.1, 0.1));
 		g_PWMesh.SetMaterial(mater);
-		g_PW3DDevice.SetRayTrace();
+		PW_Material mater0;
+		mater0.fP = 1.f;
+		mater0.fRef = 1.3f;
+		g_PWMesh2.SetMaterial(mater0);
+		g_PWMesh.UseVertexNormal(PW_TRUE);
+		g_PWMesh2.UseVertexNormal(PW_TRUE);
+
+//		g_PW3DDevice.SetRayTrace();
 
 	}
 	if (!b_gStopRotate)
@@ -465,16 +488,16 @@ void RenderScene()
 	
 	//mesh 1
 	PW_Matrix4D rotatemat;
-	PW_RotateByXMatrix(rotatemat,   PI / 4.0f);
+	PW_RotateByXMatrix(rotatemat,  0 * PI / 4.0f);
 	PW_Matrix4D wordmat, wordmat1;
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
 	PW_MatrixProduct4D(rotatemat, wordmat, wordmat1);
-	PW_RotateByYMatrix(rotatemat, fr);
+	PW_RotateByYMatrix(rotatemat, PI * 2 / 8);
 	PW_MatrixProduct4D(rotatemat, wordmat1, wordmat);
-
-	
-	g_PW3DDevice.SetWorldTransform(wordmat);
+	PW_TranslationMatrix(wordmat1, 0, 0, 50);
+	PW_MatrixProduct4D(wordmat1, wordmat, rotatemat);
+	g_PW3DDevice.SetWorldTransform(rotatemat);
 	PW_ViewMatrix(wordmat, PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 	g_PW3DDevice.SetViewTransform(wordmat);
 	PW_ProjMatrix(wordmat, PI / 4, 1.0f, 1, 1000);
@@ -488,12 +511,12 @@ void RenderScene()
 	
 	PW_RotateByXMatrix(rotatemat, 0 * PI / 4.0f);
 	
-	PW_TranslationMatrix(wordmat, -20, -20, -20);
+	PW_TranslationMatrix(wordmat, -5, -5, -5);
 
 	PW_MatrixProduct4D(rotatemat, wordmat, wordmat1);
-	PW_RotateByYMatrix(rotatemat, fr * 2);
+	PW_RotateByYMatrix(rotatemat, PI / 16 * 2);
 	PW_MatrixProduct4D(rotatemat, wordmat1, wordmat);
-	PW_TranslationMatrix(wordmat1, 20, 20, 40);
+	PW_TranslationMatrix(wordmat1, 0, 0, 10);
 	PW_MatrixProduct4D(wordmat1, wordmat, rotatemat);
 
 	g_PW3DDevice.SetWorldTransform(rotatemat);
@@ -504,7 +527,7 @@ void RenderScene()
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
-//	g_PW3DDevice.DrawMesh(g_PWMesh);
+	g_PW3DDevice.DrawMesh(g_PWMesh2);
 //	g_PW3DDevice.DrawCircle(250, 250, 100);
 	//g_PW3DDevice.DrawEllipse(250, 250, 150, 100);
 	g_PW3DDevice.Render();

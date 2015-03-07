@@ -109,11 +109,11 @@ void PW_ProjMatrix(PW_Matrix4D& m, PW_FLOAT fAngle, PW_FLOAT fRate, PW_FLOAT fNe
 	PW_FLOAT sx, sy;
 	
 	sx = tan(fAngle / 2) ;
-	sx = 1 / sx ;
+	sx = 1.f / sx ;
 	//sx *= fRate;
 	sy = sx;
 	m[0][0] =  sx * fRate;
-	m[1][1] = m[0][0];
+	m[1][1] = sy;
 	m[2][2] = (fNear + fFar) / (fFar - fNear);
 	m[2][3] = 2 * fFar * fNear / (fNear - fFar);
 	m[3][2] = 1;
@@ -166,7 +166,7 @@ void PW_Vector4D::MatrixProduct(PW_Matrix4D& mat)
 }
 
 PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_TrianglePlane& plane, PW_Vector3D& inserctionPoint
-	, PW_Vector3D& vRefDir1, PW_Vector3D& vRefDir2, PW_FLOAT fRef2, PW_Vector3D& vNormalll)
+	, PW_Vector3D& vRefDir1, PW_Vector3D& vRefDir2, PW_FLOAT fRef2, PW_Vector3D& vNormalll, PW_BOOL bUseVertexNormal)
 {
 	vDelta.Normalize();
 	PW_Vector3D e1 = plane.p2 - plane.p1;
@@ -174,13 +174,9 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 	PW_Vector3D e3 = plane.p1 - plane.p3;
 	PW_Vector3D vNorm;
 	PW_CrossProduct(e1, e2, vNorm);
+	vNorm.Normalize();
 	PW_Vector3D vp = plane.p1 - vStart;
 	//return PW_FALSE;
-	if (PW_DotProduct(vDelta, vNorm) >= 0.f)
-	{
-		//射线照到的是背面
-		return PW_FALSE;
-	}
 	PW_FLOAT u;
 	PW_FLOAT dot1 = PW_DotProduct(vp, vNorm);
 	PW_FLOAT dot2 = PW_DotProduct(vDelta, vNorm);
@@ -189,6 +185,7 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 	{
 		return PW_FALSE;
 	}
+	
 	PW_Vector3D inserp = vStart + vDelta * u;
 	//
 	PW_Vector3D d1 = inserp - plane.p1;
@@ -198,22 +195,104 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 	PW_CrossProduct(e1, d1, cross1);
 	PW_CrossProduct(e2, d2, cross2);
 	PW_CrossProduct(e3, d3, cross3);
-	if (PW_DotProduct(cross1, cross2) < 0 || PW_DotProduct(cross2, cross3) < 0 ||
-		PW_DotProduct(cross1, cross3) < 0)
+	if (PW_DotProduct(cross1, cross2)  < 0.f || PW_DotProduct(cross2, cross3) < 0.f||
+		PW_DotProduct(cross1, cross3) < 0.f)
 	{
 		return PW_FALSE;
 	}
-	vNorm.Normalize();
-	vNormalll = vNorm;
-	vRefDir1 = vDelta - vNorm * 2 * (PW_DotProduct(vDelta, vNorm));
-	vRefDir1.Normalize();
 	
-	if (fRef2 > 0)
+
+	if (bUseVertexNormal)
 	{
-		PW_Vector3D vvTmp = (vNorm * -1 - vDelta) * fRef2;
-		vRefDir2 = (vNorm * -1) + vvTmp;
-		vRefDir2.Normalize();
+		
+		if (plane.p1.y > inserp.y && plane.p2.y <= inserp.y && plane.p3.y <= inserp.y)
+		{
+			vNormalll = Interpolation(inserp, plane.p1, plane.p2, plane.p3, plane.n1, plane.n2, plane.n3);
+		}
+		else if (plane.p1.y <= inserp.y && plane.p2.y > inserp.y && plane.p3.y <= inserp.y)
+		{
+			vNormalll = Interpolation(inserp, plane.p2, plane.p1, plane.p3, plane.n2, plane.n1, plane.n3);
+		}
+		else if (plane.p1.y <= inserp.y && plane.p2.y <= inserp.y && plane.p3.y > inserp.y)
+		{
+			vNormalll = Interpolation(inserp, plane.p3, plane.p2, plane.p1, plane.n3, plane.n2, plane.n1);
+		}
+		else if (plane.p1.y < inserp.y && plane.p2.y >= inserp.y && plane.p3.y >= inserp.y)
+		{
+			vNormalll = Interpolation(inserp, plane.p1, plane.p2, plane.p3, plane.n1, plane.n2, plane.n3);
+		}
+		else if (plane.p1.y >= inserp.y && plane.p2.y < inserp.y && plane.p3.y >= inserp.y)
+		{
+			vNormalll = Interpolation(inserp, plane.p2, plane.p1, plane.p3, plane.n2, plane.n1, plane.n3);
+		}
+		else if (plane.p1.y >= inserp.y && plane.p2.y >= inserp.y && plane.p3.y < inserp.y)
+		{
+			vNormalll = Interpolation(inserp, plane.p3, plane.p2, plane.p1, plane.n3, plane.n2, plane.n1);
+		}
+		else
+		{
+			return PW_FALSE;
+		}
+		//vNorm = vNormalll;
+		//vNorm.Normalize();
 	}
+	else
+	{
+		//vNorm.Normalize();
+		vNormalll = vNorm;
+	}
+	PW_Vector3D vTmpNor = vNorm  * (dot2);
+	PW_Vector3D vIncreV = vDelta - vTmpNor;
+	if (dot2 > 0.f)
+	{
+		//return PW_FALSE;
+		//射线照到的是背面
+		vRefDir1.x = 0;
+		vRefDir1.y = 0;
+		vRefDir1.z = 0;
+		if (fRef2 > 0)
+		{
+			//PW_FLOAT
+			PW_Vector3D vvTmp = vIncreV * (fRef2);
+
+			PW_FLOAT fL2 = vvTmp.GetLen2();
+			if (1.f - fL2 > 0)
+			{
+				PW_FLOAT fL = sqrt(1.f - fL2);
+				PW_Vector3D vT = vNorm * (fL);
+				vRefDir2 = vT + vvTmp;
+
+				vRefDir2.Normalize();
+			}
+			else
+			{
+				vRefDir2.x = 0;
+				vRefDir2.y = 0;
+				vRefDir2.z = 0;
+			}
+			//vRefDir2 = vDelta;
+			vRefDir1 = PW_Vector3D(0.f);
+		}
+	}
+	else
+	{
+		vRefDir1 = vDelta - vTmpNor * 2;
+		vRefDir1.Normalize();
+		if (fRef2 > 0)
+		{
+			//PW_FLOAT
+			PW_Vector3D vvTmp = vIncreV * (1.f / fRef2);
+			PW_FLOAT fL = sqrt(1.f - vvTmp.GetLen2());
+			PW_Vector3D vT = vNorm * (-fL);
+			vRefDir2 = vT + vvTmp;
+			vRefDir2.Normalize();
+			vRefDir1 = PW_Vector3D(0.f);
+			//vRefDir2 = vDelta;
+		}
+	}
+
+	
+	
 	
 	inserctionPoint = inserp;
 	return PW_TRUE;

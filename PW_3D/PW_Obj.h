@@ -53,7 +53,8 @@ struct PW_Material
 	PW_COLORF cDiffuse;
 	PW_COLORF cEmission;
 	PW_COLORF cSpecularReflection;
-	PW_FLOAT fP;//镜面反射强度
+	PW_FLOAT fP;//
+	PW_FLOAT fRef;
 };
 
 struct PW_Triangle
@@ -135,12 +136,17 @@ struct PW_Mesh
 	int indexcount;
 	PW_BOOL bHasMaterial;
 	PW_AABB curAABB;
-	PW_Mesh() :buffer(NULL), indexbuffer(NULL), pointcount(0), indexcount(0), bHasMaterial(PW_FALSE), pNowBuffer(NULL)
+	PW_BOOL bUseVertexNormal;
+	PW_Mesh() :buffer(NULL), indexbuffer(NULL), pointcount(0), indexcount(0), bHasMaterial(PW_FALSE), pNowBuffer(NULL), bUseVertexNormal(PW_FALSE)
 	{}
+
+	void UseVertexNormal(PW_BOOL bV){ bUseVertexNormal = bV; }
 
 	PW_BOOL RayInsertAABB(PW_LightRay& lightRay);
 
 	PW_BOOL RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2);
+
+	PW_BOOL RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir);
 
 	void SetMaterial(PW_Material m)
 	{
@@ -377,8 +383,9 @@ struct PW_RayTraceNode
 	PW_BOOL bInsert;
 	PW_RayTraceNode* pLeft;
 	PW_RayTraceNode* pRight;
+	PW_INT nMeshIndex;
 
-	PW_RayTraceNode() :pLeft(NULL), pRight(NULL), bInsert(PW_FALSE)
+	PW_RayTraceNode() :pLeft(NULL), pRight(NULL), bInsert(PW_FALSE), nMeshIndex(-1)
 	{}
 };
 //#endif

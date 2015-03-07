@@ -129,6 +129,11 @@ struct PW_Vector3D
 		return sqrt(x * x + y * y + z* z);
 	}
 
+	inline PW_FLOAT GetLen2()
+	{
+		return (x * x + y * y + z* z);
+	}
+
 	void Normalize()
 	{
 		PW_FLOAT flen = sqrt(x * x + y * y + z* z);
@@ -260,6 +265,9 @@ struct PW_TrianglePlane
 	PW_Vector3D p1;
 	PW_Vector3D p2;
 	PW_Vector3D p3;
+	PW_Vector3D n1;
+	PW_Vector3D n2;
+	PW_Vector3D n3;
 };
 
 struct PW_Plane
@@ -304,6 +312,25 @@ inline void QuadMemSet(void* dst, int iSize, DWORD value)
 }
 
 PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, 
-	PW_TrianglePlane& plane, PW_Vector3D& inserctionPoint, PW_Vector3D& vRefDir1, PW_Vector3D& vRefDir2, PW_FLOAT fRef2, PW_Vector3D& vNormal);
+	PW_TrianglePlane& plane, PW_Vector3D& inserctionPoint, PW_Vector3D& vRefDir1
+	, PW_Vector3D& vRefDir2, PW_FLOAT fRef2, PW_Vector3D& vNormal, PW_BOOL bUseVertexNormal);
 
+
+//已经确保P 在三角形内
+inline PW_Vector3D Interpolation( PW_Vector3D& p,  PW_Vector3D& p1,  PW_Vector3D& p2,  PW_Vector3D& p3,
+	 PW_Vector3D& vNor1,  PW_Vector3D& vNor2,  PW_Vector3D& vNor3)
+{
+	PW_Vector3D vdir1 = p2 - p1;
+	PW_Vector3D vdir2 = p3 - p1;
+	PW_FLOAT u = (p.y - p1.y) / vdir1.y;
+	PW_FLOAT v = (p.y - p1.y) / vdir2.y;
+	PW_Vector3D vNorl = vNor1 * (1 - u) + vNor2 * u;
+	PW_Vector3D vNorr = vNor1 * (1 - v) + vNor3 * v;
+	PW_FLOAT x1 = p1.x + vdir1.x * u;
+	PW_FLOAT x2 = p1.x + vdir2.x * v;
+	PW_FLOAT uu = abs(p.x - x1) / abs(x1 - x2);
+	PW_Vector3D vNorrr = vNorl * (1 - uu) + vNorr * uu;
+	vNorr.Normalize();
+	return vNorrr;
+}
 //#endif

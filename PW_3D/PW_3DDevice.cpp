@@ -21,7 +21,7 @@ PW_3DDevice::~PW_3DDevice()
 
 bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 {
-	m_nMaxDepth = 5;
+	m_nMaxDepth = 3;
 	m_bRayTrace = PW_FALSE;
 	m_bWrite = 0;
 	m_nCurNodePos = 0;
@@ -144,13 +144,14 @@ void PW_3DDevice::Release()
 
 void PW_3DDevice::Render()
 {
+	
 	if (m_bRayTrace)
 	{
 		RayTrace();
 	}
 	//else
 	//{
-		Update();
+	Update();
 	//}
 
 }
@@ -407,6 +408,23 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 			, PW_POINT3D(m_v4dBuffer[index3], mesh.buffer[index3].pwColor, m_vNormalsBuffer[index3], mesh.indexbuffer[i].u3, mesh.indexbuffer[i].v3), PW_RGBA(255, 0, 0), m_ds);
 	
 	}
+	//for (int i = 0; i < mesh.pointcount;i++)
+	//{
+	//	PW_Vector3D start = m_v4dBuffer[i];
+	//	PW_Vector3D end = start + m_vNormalsBuffer[i] * 50;
+	//	PW_Vector4D p1, p2, p3;
+	//	PW_Matrix4D tan;
+	//	p1 = start.MatrixProduct(m_projMatrix);
+	//	p2 = end.MatrixProduct(m_projMatrix);
+	//	//p3 = point3.MatrixProduct(m_projMatrix);
+	//	p1.NoneHomogeneous();
+	//	p2.NoneHomogeneous();
+	//	//p3.NoneHomogeneous();
+	//	p1.MatrixProduct(m_viewportMatrix);
+	//	p2.MatrixProduct(m_viewportMatrix);
+	////	p3.MatrixProduct(m_viewportMatrix);
+	//	DrawLine(PW_POINT3D(p1, PW_RGBA(200, 200, 200)), PW_POINT3D(p2, PW_RGBA(200, 200, 200)));
+	//}
 }
 
 void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
@@ -1069,7 +1087,12 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 	{
 		return PW_COLORF(0,0);
 	}
-	
+	if (abs(pNode->Light.vDir.x) < EPSILON &&
+		abs(pNode->Light.vDir.x) < EPSILON &&
+		abs(pNode->Light.vDir.x) < EPSILON)
+	{
+		return PW_COLORF(0, 0);
+	}
 	PW_COLORF cAmbient, cDiffuse, cSpecular, cEmissive;
 	PW_COLORF cP, cD, cS, cE;
 	cP = 0;
@@ -1094,7 +1117,19 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 		{
 			lightdir = m_vLights[i].vCurDir;
 		}
-		
+		PW_BOOL bHasObjIn = PW_FALSE;
+		//for (int i = 0; i < m_meshs.size(); i++)
+		//{
+		//	if (i != pNode->nMeshIndex && m_meshs[i].RayInsertion(pNode->Light.vStart, lightdir))
+		//	{
+		//		bHasObjIn = PW_TRUE;
+		//		break;
+		//	}
+		//}
+		if (bHasObjIn)
+		{
+			continue;
+		}
 		PW_FLOAT fRes = PW_DotProduct(lightdir, pNode->Light.vNormal);
 		if (fRes > 0)
 		{
@@ -1124,59 +1159,83 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 
 
 
-PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth)
+PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT& nOutTotalD)
 {
 	PW_COLORF retColorf;
 	if (!pNode)
 	{
 		return m_Ambient;
 	}
-	if (nDepth > m_nMaxDepth)
+	if (nDepth >= m_nMaxDepth)
 	{
 		return m_Ambient;
 	}
+
 	PW_BOOL bInsert = PW_FALSE;
+	PW_FLOAT pCurLen = 10000000.f;
+	PW_LightRay r1, r2;
+	PW_INT nSele = -1;
+	PW_INT nRes = -1;
 	for (int i = 0; i < m_meshs.size();i++)
 	{
-		PW_LightRay r1, r2;
-		PW_INT nRes =  m_meshs[i].RayReflect(pNode->Light, r1, r2);
+		nRes = m_meshs[i].RayReflect(pNode->Light, r1, r2);
 		pNode->bInsert = PW_FALSE;
+		
 		if (nRes > 0)
 		{
-			bInsert = PW_TRUE;
-			pNode->bInsert = PW_TRUE;
-			PW_RayTraceNode* pL = &g_Node[m_nCurNodePos++];
-			
-			pL->pRight = NULL;
-			pL->pLeft = NULL;
-			pL->Light = r1;
-			pNode->pLeft = pL;
-			PW_COLORF fT = RayComputerLight(pL);
-			PW_COLORF fL = RayTraceRec(pL, nDepth + 1);
-			PW_Vector3D pp = (pNode->Light.vStart - pL->Light.vStart);
-
-			fT = fT * (80.f / (pp.GetLen() + 1));
-			PW_COLORF fR;
-			if (nRes > 1)
+			PW_FLOAT fThisLen = (r1.vStart - pNode->Light.vStart).GetLen();
+			if (fThisLen > pCurLen || fThisLen  < EPSILON * 1000.f)
 			{
-				PW_RayTraceNode* pR = &g_Node[m_nCurNodePos++];
-				//memset(pL, 0, sizeof(PW_RayTraceNode));
-				pR->Light = r2;
-				pR->pLeft = NULL;
-				pR->pRight = NULL;
-				pNode->pRight = pR;
-				fR = RayTraceRec(pR, nDepth + 1);
-				//PW_Vector3D pp = (pNode->Light.vStart - pR->Light.vStart);
-
-				//fR = fR * (80.f / (pp.GetLen() + 1));
+				continue;
 			}
-			retColorf = retColorf + fL + fR + fT;
+			else
+				pCurLen = fThisLen;
+
+			bInsert = PW_TRUE;
+			nSele = i;
 		}
 	}
-	if (!bInsert)
+	if (bInsert)
 	{
-		return m_Ambient;
+		pNode->bInsert = PW_TRUE;
+		PW_RayTraceNode* pL = &g_Node[m_nCurNodePos++];
+		pL->nMeshIndex = nSele;
+		pL->pRight = NULL;
+		pL->pLeft = NULL;
+		pL->Light = r1;
+		pNode->pLeft = pL;
+		nOutTotalD++;
+		PW_COLORF fT = RayComputerLight(pL);
+
+		PW_COLORF fL = RayTraceRec(pL, nDepth + 1, nOutTotalD);
+		//PW_Vector3D pp = (pNode->Light.vStart - pL->Light.vStart);
+		PW_FLOAT fLen = pCurLen;
+		PW_FLOAT fRate = (30.f / (pow(PW_FLOAT(nDepth + 1), 0)* (fLen + 1.f)));
+
+
+		PW_COLORF fR;
+		if (nRes > 1)
+		{
+			PW_RayTraceNode* pR = &g_Node[m_nCurNodePos++];
+			//memset(pL, 0, sizeof(PW_RayTraceNode));
+			pR->Light = r2;
+			pR->pLeft = NULL;
+			pR->pRight = NULL;
+			pNode->pRight = pR;
+			
+			fR = RayTraceRec(pR, nDepth + 1, nOutTotalD);
+
+		}
+		retColorf = retColorf + fL + fR + fT;
+		if (fRate < 1.f)
+		{
+			retColorf = retColorf * fRate;
+		}
 	}
+	//if (!bInsert)
+	//{
+	//	return m_Ambient;
+	//}
 	return retColorf;
 }
 
@@ -1187,27 +1246,37 @@ void PW_3DDevice::RayTrace()
 		m_meshs[i].ComputeCurVertex();
 	}
 	UpdateCurLight();
+	PW_Vector3D raystart, rayend;
+	PW_INT nOutD = 0;
 	for (int x = 0; x < this->m_iWidth; x++)
 	{
-		for (int y =  0; y < this->m_iHeight; y++)
+		for (int y = 0; y < this->m_iHeight; y++)
 		{
 			m_nCurNodePos = 0;
-			PW_Vector3D raystart(x, y, 0);
-			PW_Vector3D rayend(x, y, 1);
-			raystart = GetViewPos(raystart);
-			rayend = GetViewPos(rayend);
+			raystart.x = x;
+			raystart.y = y;
+			raystart.z = 0.f;
+			rayend.x = x;
+			rayend.y = y;
+			rayend.z = 1.f;
+
+			GetViewPos(raystart, raystart);
+			GetViewPos(rayend, rayend);
 			PW_RayTraceNode*Root = &g_Node[m_nCurNodePos++];
-			//memset(Root, 0, sizeof(PW_RayTraceNode));
+			
 			Root->pLeft = NULL;
 			Root->pRight = NULL;
 			Root->Light.vStart = raystart;
 			Root->Light.vDir = rayend - raystart;
 			Root->Light.vDir.Normalize();
-			
-			PW_COLORF fr = RayTraceRec(Root, 0);//RayComputerLight(Root);
-			PW_COLOR pwc = fr * PW_COLOR(PW_RGB(255, 255, 255));
-			SetPixel(x, y, pwc);
-			
+			nOutD = 0;
+			PW_COLORF fr = RayTraceRec(Root, 0, nOutD);//RayComputerLight(Root);
+			if (nOutD > 0)
+			{
+				PW_COLOR pwc = fr * PW_COLOR(PW_RGB(255, 255, 255));
+				SetPixel(x, y, pwc);
+			}
+
 		}
 	}
 }
