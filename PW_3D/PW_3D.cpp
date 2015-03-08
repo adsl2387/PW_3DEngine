@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "PW_3D.h"
 #include "PW_3DDevice.h"
+#include "PW_SphereMesh.h"
 
 #define MAX_LOADSTRING 100
 
@@ -22,7 +23,9 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 PW_3DDevice g_PW3DDevice;
 PW_Mesh g_PWMesh;
+PW_SphereMesh g_sphereMesh;
 PW_Mesh g_PWMesh2;
+PW_Mesh g_PWMesh_Ground;
 PW_Camera g_PWCamera;
 PW_Texture g_PWTexture;
 
@@ -379,7 +382,14 @@ void RenderScene()
 		buffer1[5] = PW_POINT3D(10, 0, 10, PW_RGBA(0, 255, 255));
 		buffer1[6] = PW_POINT3D(10, 10, 10, PW_RGBA(125, 125, 125));
 		buffer1[7] = PW_POINT3D(0, 10, 10, PW_RGBA(123, 0, 0));
+
+		PW_POINT3D* groundbuffer = new PW_POINT3D[4];
+		groundbuffer[0] = PW_POINT3D(-10000, -100, -10000, PW_RGBA(255, 0, 0));
+		groundbuffer[1] = PW_POINT3D(-10000, -100, 10000, PW_RGBA(255, 0, 0));
+		groundbuffer[2] = PW_POINT3D(10000, -100, 10000, PW_RGBA(255, 0, 0));
+		groundbuffer[3] = PW_POINT3D(10000, -100, -10000, PW_RGBA(255, 0, 0));
 		PW_Triangle* indexbuffer = new PW_Triangle[12];
+		PW_Triangle* groundindexbuffer = new PW_Triangle[2];
 		int indexbbb[12][3] = 
 		{
 			{1,0,3},
@@ -394,6 +404,12 @@ void RenderScene()
 			{3,6,2},
 			{4,0,1},
 			{4,1,5}
+		};
+
+		int indexground[2][3] = 
+		{
+			{3,0,1},
+			{1,2,3}
 		};
 		PW_FLOAT uvs[12][6]=
 		{
@@ -440,10 +456,24 @@ void RenderScene()
 			indexbuffer[i].v2 = uvs[i][3];
 			indexbuffer[i].u3 = uvs[i][4];
 			indexbuffer[i].v3 = uvs[i][5];
+			if (i < 2)
+			{
+				groundindexbuffer[i][0] = indexground[i][0];
+				groundindexbuffer[i][1] = indexground[i][1];
+				groundindexbuffer[i][2] = indexground[i][2];
+				groundindexbuffer[i].u1 = uvs[i][0];
+				groundindexbuffer[i].v1 = uvs[i][1];
+				groundindexbuffer[i].u2 = uvs[i][2];
+				groundindexbuffer[i].v2 = uvs[i][3];
+				groundindexbuffer[i].u3 = uvs[i][4];
+				groundindexbuffer[i].v3 = uvs[i][5];
+			}
 		}
 	
 		g_PWMesh.SetBuffer(buffer, indexbuffer, 8, numface);
 		g_PWMesh2.SetBuffer(buffer1, indexbuffer, 8, numface);
+		g_PWMesh_Ground.SetBuffer(groundbuffer, groundindexbuffer, 4, 2);
+		g_sphereMesh.InitSphere(PW_Vector3D(20.f, 20.f, 20.f), 10.f);
 		PW_Material mater;
 		mater.fP = 1;
 		mater.fRef = 0.f;
@@ -452,23 +482,31 @@ void RenderScene()
 		mater.cSpecularReflection = PW_COLORF(0.5, 0.5, 0.5);
 		g_PW3DDevice.SetMaterial(&mater);
 		PW_Light light;
-		light.iLightType = pw_lt_directionallight;
-		light.vDirection = PW_Vector3D(0, 0, 1);
-		light.cSpecular = PW_COLORF(0.6, 0.6, 0.6);
-		light.cAmbient = PW_COLORF(0.1, 0.1, 0.1);
+		light.iLightType = pw_lt_pointlight;
+		light.vPosition = PW_Vector3D(0, 60, 60);
+		light.vDirection = PW_Vector3D(0, -1, 1);
+		light.cSpecular = PW_COLORF(0.1, 0.1, 0.1);
+		light.cAmbient = PW_COLORF(0.1f, 0.1f, 0.1f);
 		light.cDiffuse = PW_COLORF(0.9, 0.9, 0.9);
 		g_PW3DDevice.AddLight(light);
-		g_PWCamera.Init(PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
+		g_PWCamera.Init(PW_Vector3D(0, 100, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
 		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.1, 0.1, 0.1));
 		g_PWMesh.SetMaterial(mater);
+		g_sphereMesh.SetMaterial(mater);
 		PW_Material mater0;
 		mater0.fP = 1.f;
-		mater0.fRef = 1.3f;
+		mater0.fRef = 0.f;
 		g_PWMesh2.SetMaterial(mater0);
 		g_PWMesh.UseVertexNormal(PW_TRUE);
 		g_PWMesh2.UseVertexNormal(PW_TRUE);
-
+		g_PWMesh_Ground.UseVertexNormal(PW_TRUE);
+		PW_Material groundmaterial;
+		groundmaterial.cAmbient = PW_COLORF(0.5f, 0.5f, 0.5f);
+		groundmaterial.cDiffuse = PW_COLORF(0.8f, 0.8f, 0.8f);
+		groundmaterial.fP = 1.f;
+		groundmaterial.fRef = 0.f;
+		g_PWMesh_Ground.SetMaterial(groundmaterial);
 //		g_PW3DDevice.SetRayTrace();
 
 	}
@@ -498,15 +536,15 @@ void RenderScene()
 	PW_TranslationMatrix(wordmat1, 0, 0, 50);
 	PW_MatrixProduct4D(wordmat1, wordmat, rotatemat);
 	g_PW3DDevice.SetWorldTransform(rotatemat);
-	PW_ViewMatrix(wordmat, PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
+	PW_ViewMatrix(wordmat, PW_Vector3D(0, 1000, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 	g_PW3DDevice.SetViewTransform(wordmat);
-	PW_ProjMatrix(wordmat, PI / 4, 1.0f, 1, 1000);
+	PW_ProjMatrix(wordmat, PI / 4, 1.0f, 1, 1000);//
 	g_PW3DDevice.SetProjTransform(wordmat);
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	
-	g_PW3DDevice.DrawMesh(g_PWMesh);
-	
+	//g_PW3DDevice.DrawMesh(g_PWMesh);
+	g_PW3DDevice.DrawMesh(g_sphereMesh);
 	//mesh2
 	
 	PW_RotateByXMatrix(rotatemat, 0 * PI / 4.0f);
@@ -520,16 +558,18 @@ void RenderScene()
 	PW_MatrixProduct4D(wordmat1, wordmat, rotatemat);
 
 	g_PW3DDevice.SetWorldTransform(rotatemat);
-	PW_ViewMatrix(wordmat, PW_Vector3D(0, 0, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
+	PW_ViewMatrix(wordmat, PW_Vector3D(0, 1000, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 	g_PW3DDevice.SetViewTransform(wordmat);
 	PW_ProjMatrix(wordmat, PI / 4,1.f, 1, 1000);
 	g_PW3DDevice.SetProjTransform(wordmat);
 	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
 	g_PW3DDevice.SetViewPortTransform(wordmat);
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
-	g_PW3DDevice.DrawMesh(g_PWMesh2);
+	//g_PW3DDevice.DrawMesh(g_PWMesh2);
 //	g_PW3DDevice.DrawCircle(250, 250, 100);
 	//g_PW3DDevice.DrawEllipse(250, 250, 150, 100);
+	g_PW3DDevice.DrawMesh(g_PWMesh_Ground);
+
 	g_PW3DDevice.Render();
 }
 

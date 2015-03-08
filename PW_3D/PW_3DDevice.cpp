@@ -21,7 +21,7 @@ PW_3DDevice::~PW_3DDevice()
 
 bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 {
-	m_nMaxDepth = 3;
+	m_nMaxDepth = 2;
 	m_bRayTrace = PW_FALSE;
 	m_bWrite = 0;
 	m_nCurNodePos = 0;
@@ -75,7 +75,7 @@ void PW_3DDevice::Clear(PW_COLOR pwcolor, PW_FLOAT pwzbuffer)
 		QuadMemSet(m_pZBuffer, m_iWidth * m_iHeight * sizeof(DWORD), tmp);
 	}
 	else
-		this->m_meshs.clear();
+		this->m_pMeshs.clear();
 	
 	QuadMemSet(m_pBitBuffer, m_iWidth * m_iHeight * sizeof(DWORD), pwcolor);
 	m_fMaxZ = 0;
@@ -378,9 +378,9 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 
 	if (m_bRayTrace)
 	{
-		PW_Mesh me = mesh;
-		me.absoluteTM = tran;
-		m_meshs.push_back(me);
+		//PW_Mesh me = mesh;
+		mesh.m_absoluteTM = tran;
+		m_pMeshs.push_back(&mesh);
 		return;
 	}
 	if (!m_v4dBuffer)
@@ -1088,8 +1088,8 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 		return PW_COLORF(0,0);
 	}
 	if (abs(pNode->Light.vDir.x) < EPSILON &&
-		abs(pNode->Light.vDir.x) < EPSILON &&
-		abs(pNode->Light.vDir.x) < EPSILON)
+		abs(pNode->Light.vDir.y) < EPSILON &&
+		abs(pNode->Light.vDir.z) < EPSILON)
 	{
 		return PW_COLORF(0, 0);
 	}
@@ -1118,34 +1118,35 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 			lightdir = m_vLights[i].vCurDir;
 		}
 		PW_BOOL bHasObjIn = PW_FALSE;
-		//for (int i = 0; i < m_meshs.size(); i++)
-		//{
-		//	if (i != pNode->nMeshIndex && m_meshs[i].RayInsertion(pNode->Light.vStart, lightdir))
-		//	{
-		//		bHasObjIn = PW_TRUE;
-		//		break;
-		//	}
-		//}
-		if (bHasObjIn)
+		for (int i = 0; i < m_pMeshs.size(); i++)
 		{
-			continue;
+			if (i != pNode->nMeshIndex && m_pMeshs[i]->RayInsertion(pNode->Light.vStart, lightdir))
+			{
+				bHasObjIn = PW_TRUE;
+				break;
+			}
 		}
-		PW_FLOAT fRes = PW_DotProduct(lightdir, pNode->Light.vNormal);
-		if (fRes > 0)
+		if (!bHasObjIn)
 		{
-			cD = cD + m_vLights[i].cDiffuse * fRes;
+			PW_FLOAT fRes = PW_DotProduct(lightdir, pNode->Light.vNormal);
+			if (fRes > EPSILON)
+			{
+				cD = cD + m_vLights[i].cDiffuse * fRes;
+			}
+
+			//相机总是在0,0,0
+			PW_Vector3D vP = pNode->Light.vOriDir * -1;
+			vP.Normalize();
+			vP = vP + lightdir;
+			vP.Normalize();
+			PW_FLOAT fTmp = PW_DotProduct(pNode->Light.vNormal, vP);
+			//fTmp =  pow(fTmp, 2);
+			if (fTmp > 0)
+			{
+				cS = cS + m_vLights[i].cSpecular * fTmp;
+			}
 		}
-		//相机总是在0,0,0
-		PW_Vector3D vP = pNode->Light.vOriDir * -1;
-		vP.Normalize();
-		vP = vP + lightdir;
-		vP.Normalize();
-		PW_FLOAT fTmp = PW_DotProduct(pNode->Light.vNormal, vP);
-		//fTmp =  pow(fTmp, 2);
-		if (fTmp > 0)
-		{
-			cS = cS + m_vLights[i].cSpecular * fTmp;
-		}
+
 
 		cP = cP + m_vLights[i].cAmbient;
 	}
@@ -1159,7 +1160,7 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 
 
 
-PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT& nOutTotalD)
+PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT& nOutTotalD, PW_FLOAT& dis)
 {
 	PW_COLORF retColorf;
 	if (!pNode)
@@ -1172,31 +1173,36 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 	}
 
 	PW_BOOL bInsert = PW_FALSE;
-	PW_FLOAT pCurLen = 10000000.f;
+	dis = 10000000.f;
 	PW_LightRay r1, r2;
 	PW_INT nSele = -1;
 	PW_INT nRes = -1;
-	for (int i = 0; i < m_meshs.size();i++)
+	PW_LightRay pwlight1,pwlight2;
+	for (int i = 0; i < m_pMeshs.size();i++)
 	{
-		nRes = m_meshs[i].RayReflect(pNode->Light, r1, r2);
+		nRes = m_pMeshs[i]->RayReflect(pNode->Light, r1, r2);
 		pNode->bInsert = PW_FALSE;
 		
 		if (nRes > 0)
 		{
 			PW_FLOAT fThisLen = (r1.vStart - pNode->Light.vStart).GetLen();
-			if (fThisLen > pCurLen || fThisLen  < EPSILON * 1000.f)
+			if (fThisLen > dis || fThisLen  < EPSILON * 1000.f)
 			{
 				continue;
 			}
 			else
-				pCurLen = fThisLen;
+				dis = fThisLen;
 
 			bInsert = PW_TRUE;
 			nSele = i;
+			pwlight1 = r1;
+			pwlight2 = r2;
 		}
 	}
 	if (bInsert)
 	{
+		r1 = pwlight1;
+		r2 = pwlight2;
 		pNode->bInsert = PW_TRUE;
 		PW_RayTraceNode* pL = &g_Node[m_nCurNodePos++];
 		pL->nMeshIndex = nSele;
@@ -1207,11 +1213,16 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 		nOutTotalD++;
 		PW_COLORF fT = RayComputerLight(pL);
 
-		PW_COLORF fL = RayTraceRec(pL, nDepth + 1, nOutTotalD);
+		PW_FLOAT fLen;
+		PW_COLORF fL = RayTraceRec(pL, nDepth + 1, nOutTotalD, fLen);
 		//PW_Vector3D pp = (pNode->Light.vStart - pL->Light.vStart);
-		PW_FLOAT fLen = pCurLen;
+		
 		PW_FLOAT fRate = (30.f / (pow(PW_FLOAT(nDepth + 1), 0)* (fLen + 1.f)));
-
+		if (fRate < 1.f)
+		{
+			fL = fL * fRate;
+			
+		}
 
 		PW_COLORF fR;
 		if (nRes > 1)
@@ -1223,31 +1234,31 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 			pR->pRight = NULL;
 			pNode->pRight = pR;
 			
-			fR = RayTraceRec(pR, nDepth + 1, nOutTotalD);
+			fR = RayTraceRec(pR, nDepth + 1, nOutTotalD, fLen);
+			fRate = (30.f / (pow(PW_FLOAT(nDepth + 1), 0)* (fLen + 1.f)));
+			if (fRate < 1.f)
+			{
+				//fL *= fRate;
+				fR = fR * fRate;
+			}
 
 		}
 		retColorf = retColorf + fL + fR + fT;
-		if (fRate < 1.f)
-		{
-			retColorf = retColorf * fRate;
-		}
 	}
-	//if (!bInsert)
-	//{
-	//	return m_Ambient;
-	//}
+
 	return retColorf;
 }
 
 void PW_3DDevice::RayTrace()
 {
-	for (int i = 0; i < m_meshs.size();i++)
+	for (int i = 0; i < m_pMeshs.size();i++)
 	{
-		m_meshs[i].ComputeCurVertex();
+		m_pMeshs[i]->ComputeCurVertex();
 	}
 	UpdateCurLight();
 	PW_Vector3D raystart, rayend;
 	PW_INT nOutD = 0;
+	PW_FLOAT flen;
 	for (int x = 0; x < this->m_iWidth; x++)
 	{
 		for (int y = 0; y < this->m_iHeight; y++)
@@ -1270,12 +1281,20 @@ void PW_3DDevice::RayTrace()
 			Root->Light.vDir = rayend - raystart;
 			Root->Light.vDir.Normalize();
 			nOutD = 0;
-			PW_COLORF fr = RayTraceRec(Root, 0, nOutD);//RayComputerLight(Root);
+			PW_COLORF fr = RayTraceRec(Root, 0, nOutD, flen);//RayComputerLight(Root);
 			if (nOutD > 0)
 			{
 				PW_COLOR pwc = fr * PW_COLOR(PW_RGB(255, 255, 255));
+
 				SetPixel(x, y, pwc);
 			}
+			//else
+			//{
+			//	if (x >= m_iWidth / 2 - 10 && y >= m_iHeight / 2 - 10)
+			//	{
+			//		printf("error!\n");
+			//	}
+			//}
 
 		}
 	}

@@ -180,8 +180,12 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 	PW_FLOAT u;
 	PW_FLOAT dot1 = PW_DotProduct(vp, vNorm);
 	PW_FLOAT dot2 = PW_DotProduct(vDelta, vNorm);
+	if (abs(dot2) < EPSILON)
+	{
+		return PW_FALSE;
+	}
 	u = dot1 / dot2;
-	if (u < 0)
+	if (u < -EPSILON)
 	{
 		return PW_FALSE;
 	}
@@ -195,10 +199,22 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 	PW_CrossProduct(e1, d1, cross1);
 	PW_CrossProduct(e2, d2, cross2);
 	PW_CrossProduct(e3, d3, cross3);
-	if (PW_DotProduct(cross1, cross2)  < 0.f || PW_DotProduct(cross2, cross3) < 0.f||
-		PW_DotProduct(cross1, cross3) < 0.f)
+	if (PW_DotProduct(cross1, cross2)  < -EPSILON || PW_DotProduct(cross2, cross3) < -EPSILON||
+		PW_DotProduct(cross1, cross3) < -EPSILON)
 	{
-		return PW_FALSE;
+		e1.Normalize();
+		d1.Normalize();
+		e2.Normalize();
+		d2.Normalize();
+		e3.Normalize();
+		d3.Normalize();
+		if (e1.IsEqual(d1) || e2.IsEqual(d2)||e3.IsEqual(d3))
+		{
+		}
+		else
+		{
+			return PW_FALSE;
+		}
 	}
 	
 

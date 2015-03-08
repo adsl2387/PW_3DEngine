@@ -383,7 +383,7 @@ PW_BOOL PW_Mesh::RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir)
 
 void PW_Mesh::ComputeCurVertex()
 {
-	PW_Matrix4D tran = absoluteTM;
+	PW_Matrix4D tran = m_absoluteTM;
 	PW_FLOAT minx, miny, minz, maxx, maxy, maxz;
 	
 	for (int i = 0; i < pointcount; ++i)

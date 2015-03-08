@@ -95,7 +95,7 @@ protected:
 
 	void RayTrace();
 
-	PW_COLORF RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT& nOutTotalD);
+	PW_COLORF RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT& nOutTotalD, PW_FLOAT& dis);
 
 	PW_COLORF RayComputerLight(PW_RayTraceNode* pNode);
 
@@ -206,7 +206,7 @@ private:
 	bool m_bUseLight;
 	bool m_bUseTexture;
 	bool m_bUseBiliner;
-	vector<PW_Mesh> m_meshs;
+	vector<PW_Mesh*> m_pMeshs;
 	PW_BOOL m_bRayTrace;
 	int m_bShow;
 	bool m_bShowAll;

@@ -125,28 +125,30 @@ struct PW_LightRay
 	PW_Vector3D vOriDir;
 };
 
-struct PW_Mesh
+class PW_Mesh
 {
+public:
 	PW_Vertex* buffer;
 	PW_Triangle* indexbuffer;
 	PW_Vertex* pNowBuffer;
 	int pointcount;
-	PW_Matrix4D absoluteTM;//世界矩阵 * 观察矩阵
+	PW_Matrix4D m_absoluteTM;//世界矩阵 * 观察矩阵
 	PW_Material material;
 	int indexcount;
 	PW_BOOL bHasMaterial;
 	PW_AABB curAABB;
 	PW_BOOL bUseVertexNormal;
+
 	PW_Mesh() :buffer(NULL), indexbuffer(NULL), pointcount(0), indexcount(0), bHasMaterial(PW_FALSE), pNowBuffer(NULL), bUseVertexNormal(PW_FALSE)
 	{}
 
 	void UseVertexNormal(PW_BOOL bV){ bUseVertexNormal = bV; }
 
-	PW_BOOL RayInsertAABB(PW_LightRay& lightRay);
+	virtual PW_BOOL RayInsertAABB(PW_LightRay& lightRay);
 
-	PW_BOOL RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2);
+	virtual PW_BOOL RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2);
 
-	PW_BOOL RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir);
+	virtual PW_BOOL RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir);
 
 	void SetMaterial(PW_Material m)
 	{
@@ -176,7 +178,7 @@ struct PW_Mesh
 		ComputeNormal();
 	}
 
-	void ComputeCurVertex();
+	virtual void ComputeCurVertex();
 
 	int GetVertexCount(){ return pointcount; }
 

@@ -10,7 +10,7 @@ typedef int PW_BOOL;
 #define PW_FALSE	0
 
 #define PI 3.1415926535898f
-#define EPSILON 0.0000001
+#define EPSILON 0.000001f
 #define ROUND(x) ((int)((x) + 0.5f))
 typedef DWORD PW_COLOR;
 
@@ -71,6 +71,18 @@ struct PW_Vector3D
 	{}
 
 	PW_Vector3D(PW_Vector4D& v4d);
+
+	PW_BOOL IsEqual(PW_Vector3D& v)
+	{
+		if (abs(v.x - x) < EPSILON && abs(v.y - y) < EPSILON && abs(v.z - z) < EPSILON)
+		{
+			return PW_TRUE;
+		}
+		else
+		{
+			return PW_FALSE;
+		}
+	}
 
 	inline PW_BOOL operator>(PW_Vector3D& v3d)
 	{

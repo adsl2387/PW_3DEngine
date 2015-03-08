@@ -92,6 +92,7 @@
     <ClCompile Include="PW_Camera.cpp" />
     <ClCompile Include="PW_Math.cpp" />
     <ClCompile Include="PW_Obj.cpp" />
+    <ClCompile Include="PW_SphereMesh.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -103,6 +104,7 @@
     <ClInclude Include="PW_Camera.h" />
     <ClInclude Include="PW_Math.h" />
     <ClInclude Include="PW_Obj.h" />
+    <ClInclude Include="PW_SphereMesh.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
