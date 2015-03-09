@@ -384,10 +384,10 @@ void RenderScene()
 		buffer1[7] = PW_POINT3D(0, 10, 10, PW_RGBA(123, 0, 0));
 
 		PW_POINT3D* groundbuffer = new PW_POINT3D[4];
-		groundbuffer[0] = PW_POINT3D(-10000, -100, -10000, PW_RGBA(255, 0, 0));
-		groundbuffer[1] = PW_POINT3D(-10000, -100, 10000, PW_RGBA(255, 0, 0));
-		groundbuffer[2] = PW_POINT3D(10000, -100, 10000, PW_RGBA(255, 0, 0));
-		groundbuffer[3] = PW_POINT3D(10000, -100, -10000, PW_RGBA(255, 0, 0));
+		groundbuffer[0] = PW_POINT3D(-100, -100, -100, PW_RGBA(255, 0, 0));
+		groundbuffer[1] = PW_POINT3D(-100, -100, 100, PW_RGBA(255, 0, 0));
+		groundbuffer[2] = PW_POINT3D(100, -100, 100, PW_RGBA(255, 0, 0));
+		groundbuffer[3] = PW_POINT3D(100, -100, -100, PW_RGBA(255, 0, 0));
 		PW_Triangle* indexbuffer = new PW_Triangle[12];
 		PW_Triangle* groundindexbuffer = new PW_Triangle[2];
 		int indexbbb[12][3] = 
@@ -477,18 +477,21 @@ void RenderScene()
 		PW_Material mater;
 		mater.fP = 1;
 		mater.fRef = 0.f;
-		mater.cAmbient = PW_COLORF(0., 0., 0., 0.);
-		mater.cDiffuse = PW_COLORF(0.9,0.9, 0.9);
-		mater.cSpecularReflection = PW_COLORF(0.5, 0.5, 0.5);
+		mater.cAmbient = PW_COLORF(0.f, 0.f, 0.f, 0.f);
+		mater.cDiffuse = PW_COLORF(0.1f,0.1f, 0.1f);
+		mater.cSpecularReflection = PW_COLORF(0.2f, 0.2f, 0.4f);
 		g_PW3DDevice.SetMaterial(&mater);
-		PW_Light light;
-		light.iLightType = pw_lt_pointlight;
-		light.vPosition = PW_Vector3D(0, 60, 60);
-		light.vDirection = PW_Vector3D(0, -1, 1);
-		light.cSpecular = PW_COLORF(0.1, 0.1, 0.1);
+		PW_Light light,light2;
+		light.iLightType = pw_lt_directionallight;
+		light.vPosition = PW_Vector3D(-10, 100, 30);
+		light.vDirection = PW_Vector3D(0, -1, 0);
+		light.cSpecular = PW_COLORF(1.f, 1.f, 1.f);
 		light.cAmbient = PW_COLORF(0.1f, 0.1f, 0.1f);
-		light.cDiffuse = PW_COLORF(0.9, 0.9, 0.9);
+		light.cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
+		light2 = light;
+		light2.iLightType = pw_lt_pointlight;
 		g_PW3DDevice.AddLight(light);
+		g_PW3DDevice.AddLight(light2);
 		g_PWCamera.Init(PW_Vector3D(0, 100, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0));
 		g_PW3DDevice.SetCamera(&g_PWCamera);
 		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.1, 0.1, 0.1));
@@ -502,12 +505,12 @@ void RenderScene()
 		g_PWMesh2.UseVertexNormal(PW_TRUE);
 		g_PWMesh_Ground.UseVertexNormal(PW_TRUE);
 		PW_Material groundmaterial;
-		groundmaterial.cAmbient = PW_COLORF(0.5f, 0.5f, 0.5f);
-		groundmaterial.cDiffuse = PW_COLORF(0.8f, 0.8f, 0.8f);
+		groundmaterial.cAmbient = PW_COLORF(0.01f, 0.01f, 0.01f);
+		groundmaterial.cDiffuse = PW_COLORF(0.1f, 0.3f, 0.1f);
 		groundmaterial.fP = 1.f;
 		groundmaterial.fRef = 0.f;
 		g_PWMesh_Ground.SetMaterial(groundmaterial);
-//		g_PW3DDevice.SetRayTrace();
+		g_PW3DDevice.SetRayTrace();
 
 	}
 	if (!b_gStopRotate)
@@ -524,13 +527,19 @@ void RenderScene()
 		g_PW3DDevice.SetHelpOutputInfo(fr);
 	}
 	
+	
+
+	PW_Matrix4D identymatrix;
+	identymatrix.IdentityMatrix();
+	g_PW3DDevice.SetWorldTransform(identymatrix);
+	g_PW3DDevice.DrawMesh(g_PWMesh_Ground);
 	//mesh 1
 	PW_Matrix4D rotatemat;
 	PW_RotateByXMatrix(rotatemat,  0 * PI / 4.0f);
 	PW_Matrix4D wordmat, wordmat1;
 	PW_TranslationMatrix(wordmat, -20, -20, -20);
 
-	PW_MatrixProduct4D(rotatemat, wordmat, wordmat1);
+	PW_MatrixProduct4D( wordmat, rotatemat, wordmat1);
 	PW_RotateByYMatrix(rotatemat, PI * 2 / 8);
 	PW_MatrixProduct4D(rotatemat, wordmat1, wordmat);
 	PW_TranslationMatrix(wordmat1, 0, 0, 50);
@@ -568,7 +577,7 @@ void RenderScene()
 	//g_PW3DDevice.DrawMesh(g_PWMesh2);
 //	g_PW3DDevice.DrawCircle(250, 250, 100);
 	//g_PW3DDevice.DrawEllipse(250, 250, 150, 100);
-	g_PW3DDevice.DrawMesh(g_PWMesh_Ground);
+
 
 	g_PW3DDevice.Render();
 }

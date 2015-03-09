@@ -1120,7 +1120,7 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 		PW_BOOL bHasObjIn = PW_FALSE;
 		for (int i = 0; i < m_pMeshs.size(); i++)
 		{
-			if (i != pNode->nMeshIndex && m_pMeshs[i]->RayInsertion(pNode->Light.vStart, lightdir))
+			if (i != pNode->nMeshIndex && m_pMeshs[i]->RayInsertion(pNode->Light.vStart, lightdir ))
 			{
 				bHasObjIn = PW_TRUE;
 				break;
@@ -1213,12 +1213,20 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 		nOutTotalD++;
 		PW_COLORF fT = RayComputerLight(pL);
 
-		PW_FLOAT fLen;
+		PW_FLOAT fLen = 10000000.f;
 		PW_COLORF fL = RayTraceRec(pL, nDepth + 1, nOutTotalD, fLen);
 		//PW_Vector3D pp = (pNode->Light.vStart - pL->Light.vStart);
 		
-		PW_FLOAT fRate = (30.f / (pow(PW_FLOAT(nDepth + 1), 0)* (fLen + 1.f)));
-		if (fRate < 1.f)
+		PW_FLOAT fRate = (1000.f /  (fLen * fLen));
+		if (fRate > 1.f)
+		{
+			fRate = 0.8f;
+		}
+		else
+		{
+			fRate *= 0.8f;
+		}
+		if (fRate < 1.f && fLen <10000000.f)
 		{
 			fL = fL * fRate;
 			
