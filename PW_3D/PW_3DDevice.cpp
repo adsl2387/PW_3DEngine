@@ -21,7 +21,7 @@ PW_3DDevice::~PW_3DDevice()
 
 bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 {
-	m_nMaxDepth = 2;
+	m_nMaxDepth = 4;
 	m_bRayTrace = PW_FALSE;
 	m_bWrite = 0;
 	m_nCurNodePos = 0;
@@ -374,7 +374,7 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 	m_bShow = 0;
 	PW_Matrix4D tran;
 	PW_Matrix4D tran1;
-	PW_MatrixProduct4D(m_Camera->GetViewMat(), m_worldMatrix, tran);
+	PW_MatrixProduct4D(m_Camera->GetViewMat(), mesh.m_matAbsTM, tran);
 
 	if (m_bRayTrace)
 	{
@@ -442,26 +442,26 @@ void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
 		{
 			PW_FLOAT par = 1.0f;
 			PW_Vector3D lightdir;
-			if (m_vLights[i].iLightType == pw_lt_spotlight)
+			if (m_vLights[i]->m_iLightType == pw_lt_spotlight)
 			{
 			}
-			else if (m_vLights[i].iLightType == pw_lt_pointlight)
+			else if (m_vLights[i]->m_iLightType == pw_lt_pointlight)
 			{
-				PW_Vector3D vP = m_vLights[i].vPosition.MatrixProduct(viewMat);
+				PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(viewMat);
 				lightdir = vP - point;
 			}
 			else
 			{
 				PW_Vector3D vOri;
 				vOri = vOri.MatrixProduct(viewMat);
-				PW_Vector3D vP = m_vLights[i].vDirection.MatrixProduct(viewMat);
+				PW_Vector3D vP = m_vLights[i]->m_vDirection.MatrixProduct(viewMat);
 				lightdir = vOri - vP;
 			}
 			lightdir.Normalize();
 			PW_FLOAT fRes = PW_DotProduct(lightdir, point.vNormal);
 			if (fRes > 0)
 			{
-				cD = cD + m_vLights[i].cDiffuse * fRes;
+				cD = cD + m_vLights[i]->m_cDiffuse * fRes;
 			}
 			//相机总是在0,0,0
 			PW_Vector3D vP = point * -1;
@@ -471,10 +471,10 @@ void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
 			fTmp = pow(fTmp, m_material.fP);
 			if (fTmp > 0)
 			{
-				cS = cS + m_vLights[i].cSpecular * fTmp;
+				cS = cS + m_vLights[i]->m_cSpecular * fTmp;
 			}
 
-			cP = cP + m_vLights[i].cAmbient;
+			cP = cP + m_vLights[i]->m_cAmbient;
 		}
 		
 	}
@@ -539,10 +539,11 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 		return;
 	}
 	PW_Vector4D p1, p2, p3;
-	PW_Matrix4D tan;
-	p1 = point1.MatrixProduct(m_projMatrix);
-	p2 = point2.MatrixProduct(m_projMatrix);
-	p3 = point3.MatrixProduct(m_projMatrix);
+	PW_Matrix4D tan, projMatrix;
+	projMatrix = this->m_Camera->GetProjMat();
+	p1 = point1.MatrixProduct(projMatrix);
+	p2 = point2.MatrixProduct(projMatrix);
+	p3 = point3.MatrixProduct(projMatrix);
 	p1.NoneHomogeneous();
 	p2.NoneHomogeneous();
 	p3.NoneHomogeneous();
@@ -838,7 +839,8 @@ PW_Vector4D PW_3DDevice::GetOriPos(PW_FLOAT x, PW_FLOAT y, PW_FLOAT z)
 	PW_FLOAT x1 = (x + x) / m_fWidth - 1.0f;
 	PW_FLOAT y1 = 1.0f - (y + y) / m_fHeight;
 	PW_FLOAT z1 = (z + z) - 1.0f;
-	v3d.z = this->m_projMatrix[2][3] / (z1 - this->m_projMatrix[2][2]);
+	PW_Matrix4D projMatrix = this->m_Camera->GetProjMat();
+	v3d.z = projMatrix[2][3] / (z1 - projMatrix[2][2]);
 	v3d.x = x1 * v3d.z;
 	v3d.y = y1 * v3d.z;
 	v3d.Normalize();	
@@ -1054,29 +1056,41 @@ void PW_3DDevice::DrawCircle(PW_FLOAT x, PW_FLOAT y, PW_FLOAT r, PW_COLOR pwColo
 	}
 }
 
+void PW_3DDevice::AddLight(PW_Light* pLight)
+{
+	m_vLights.push_back(pLight);
+	m_bUseLight = true;
+}
+
 void PW_3DDevice::UpdateCurLight()
 {
 	for (int i = 0; i < m_vLights.size(); ++i)
 	{
 		PW_Vector3D lightdir;
-		if (m_vLights[i].iLightType == pw_lt_spotlight)
+		if (m_vLights[i]->m_iLightType == pw_lt_spotlight)
 		{
 		}
-		else if (m_vLights[i].iLightType == pw_lt_pointlight)
+		else if (m_vLights[i]->m_iLightType == pw_lt_pointlight)
 		{
-			PW_Vector3D vP = m_vLights[i].vPosition.MatrixProduct(m_Camera->GetViewMat());
+			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(m_Camera->GetViewMat());
 			lightdir = vP;
-			m_vLights[i].vCurDir = vP;
+			m_vLights[i]->m_vCurDir = vP;
 			//lightdir.Normalize();
+		}
+		else if (m_vLights[i]->m_iLightType == pw_lt_arealight)
+		{
+			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(m_Camera->GetViewMat());
+			lightdir = vP;
+			m_vLights[i]->m_vCurDir = vP;
 		}
 		else
 		{
 			PW_Vector3D vOri;
 			vOri = vOri.MatrixProduct(m_Camera->GetViewMat());
-			PW_Vector3D vP = m_vLights[i].vDirection.MatrixProduct(m_Camera->GetViewMat());
+			PW_Vector3D vP = m_vLights[i]->m_vDirection.MatrixProduct(m_Camera->GetViewMat());
 			lightdir = vOri - vP;
 			lightdir.Normalize();
-			m_vLights[i].vCurDir = lightdir;
+			m_vLights[i]->m_vCurDir = lightdir;
 		}
 	}
 }
@@ -1093,6 +1107,10 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 	{
 		return PW_COLORF(0, 0);
 	}
+	if (m_pMeshs[pNode->nMeshIndex]->material.bEmissive)//自发光
+	{
+		return m_pMeshs[pNode->nMeshIndex]->material.cEmission;
+	}
 	PW_COLORF cAmbient, cDiffuse, cSpecular, cEmissive;
 	PW_COLORF cP, cD, cS, cE;
 	cP = 0;
@@ -1104,23 +1122,30 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 	{
 		PW_FLOAT par = 1.0f;
 		PW_Vector3D lightdir;
-		if (m_vLights[i].iLightType == pw_lt_spotlight)
+		if (m_vLights[i]->m_iLightType == pw_lt_spotlight)
 		{
 		}
-		else if (m_vLights[i].iLightType == pw_lt_pointlight)
+		else if (m_vLights[i]->m_iLightType == pw_lt_pointlight)
 		{
-			PW_Vector3D vP = m_vLights[i].vCurDir;
+			PW_Vector3D vP = m_vLights[i]->m_vCurDir;
+			lightdir = vP - pNode->Light.vStart;
+			lightdir.Normalize();
+		}
+		else if (m_vLights[i]->m_iLightType == pw_lt_arealight)
+		{
+			PW_Vector3D vP = m_vLights[i]->m_vCurDir;
 			lightdir = vP - pNode->Light.vStart;
 			lightdir.Normalize();
 		}
 		else
 		{
-			lightdir = m_vLights[i].vCurDir;
+			lightdir = m_vLights[i]->m_vCurDir;
 		}
+		
 		PW_BOOL bHasObjIn = PW_FALSE;
-		for (int i = 0; i < m_pMeshs.size(); i++)
+		for (int ii = 0; ii < m_pMeshs.size(); ii++)
 		{
-			if (i != pNode->nMeshIndex && m_pMeshs[i]->RayInsertion(pNode->Light.vStart, lightdir ))
+			if (ii != pNode->nMeshIndex &&!m_pMeshs[ii]->material.bEmissive && m_pMeshs[ii]->RayInsertion(pNode->Light.vStart, lightdir))
 			{
 				bHasObjIn = PW_TRUE;
 				break;
@@ -1131,7 +1156,7 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 			PW_FLOAT fRes = PW_DotProduct(lightdir, pNode->Light.vNormal);
 			if (fRes > EPSILON)
 			{
-				cD = cD + m_vLights[i].cDiffuse * fRes;
+				cD = cD + m_vLights[i]->GetDiffuse(&pNode->Light.vStart) * fRes;
 			}
 
 			//相机总是在0,0,0
@@ -1140,15 +1165,15 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 			vP = vP + lightdir;
 			vP.Normalize();
 			PW_FLOAT fTmp = PW_DotProduct(pNode->Light.vNormal, vP);
-			//fTmp =  pow(fTmp, 2);
+			fTmp =  pow(fTmp, 15);
 			if (fTmp > 0)
 			{
-				cS = cS + m_vLights[i].cSpecular * fTmp;
+				cS = cS + m_vLights[i]->GetSpecular(&pNode->Light.vStart) * fTmp;
 			}
 		}
 
 
-		cP = cP + m_vLights[i].cAmbient;
+		cP = cP + m_vLights[i]->m_cAmbient;
 	}
 	cAmbient = pNode->Light.cAmbient * cP;
 	cDiffuse = pNode->Light.cDiffuse * cD;
@@ -1157,8 +1182,6 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 	cRet = cAmbient + cDiffuse + cSpecular;
 	return cRet;
 }
-
-
 
 PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT& nOutTotalD, PW_FLOAT& dis)
 {
@@ -1214,13 +1237,14 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 		PW_COLORF fT = RayComputerLight(pL);
 
 		PW_FLOAT fLen = 10000000.f;
-		PW_COLORF fL = RayTraceRec(pL, nDepth + 1, nOutTotalD, fLen);
-		//PW_Vector3D pp = (pNode->Light.vStart - pL->Light.vStart);
+		PW_COLORF fL;
+		if (!m_pMeshs[nSele]->material.bEmissive)
+			fL = RayTraceRec(pL, nDepth + 1, nOutTotalD, fLen);
 		
-		PW_FLOAT fRate = (1000.f /  (fLen * fLen));
+		PW_FLOAT fRate = (500.f /  (fLen * fLen));
 		if (fRate > 1.f)
 		{
-			fRate = 0.8f;
+			fRate = 0.5f;
 		}
 		else
 		{
@@ -1229,11 +1253,10 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 		if (fRate < 1.f && fLen <10000000.f)
 		{
 			fL = fL * fRate;
-			
 		}
 
 		PW_COLORF fR;
-		if (nRes > 1)
+		if (nRes > 1 && !m_pMeshs[nSele]->material.bEmissive)
 		{
 			PW_RayTraceNode* pR = &g_Node[m_nCurNodePos++];
 			//memset(pL, 0, sizeof(PW_RayTraceNode));
@@ -1296,14 +1319,6 @@ void PW_3DDevice::RayTrace()
 
 				SetPixel(x, y, pwc);
 			}
-			//else
-			//{
-			//	if (x >= m_iWidth / 2 - 10 && y >= m_iHeight / 2 - 10)
-			//	{
-			//		printf("error!\n");
-			//	}
-			//}
-
 		}
 	}
 }

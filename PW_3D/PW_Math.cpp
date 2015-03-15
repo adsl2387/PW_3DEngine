@@ -220,7 +220,7 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 
 	if (bUseVertexNormal)
 	{
-		
+		//phong 法向量插值
 		if (plane.p1.y > inserp.y && plane.p2.y <= inserp.y && plane.p3.y <= inserp.y)
 		{
 			vNormalll = Interpolation(inserp, plane.p1, plane.p2, plane.p3, plane.n1, plane.n2, plane.n3);
@@ -259,7 +259,7 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 	}
 	PW_Vector3D vTmpNor = vNorm  * (dot2);
 	PW_Vector3D vIncreV = vDelta - vTmpNor;
-	if (dot2 > 0.f)
+	if (dot2 > EPSILON)
 	{
 		//return PW_FALSE;
 		//射线照到的是背面
@@ -307,9 +307,6 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 		}
 	}
 
-	
-	
-	
 	inserctionPoint = inserp;
 	return PW_TRUE;
 }

@@ -52,9 +52,14 @@ struct PW_Material
 	PW_COLORF cAmbient;
 	PW_COLORF cDiffuse;
 	PW_COLORF cEmission;
+	PW_BOOL bEmissive;//是否自发光
 	PW_COLORF cSpecularReflection;
-	PW_FLOAT fP;//
+	PW_FLOAT fP;//高光指数   实时渲染中用
 	PW_FLOAT fRef;
+
+	PW_Material() :
+		bEmissive(PW_FALSE)
+	{};
 };
 
 struct PW_Triangle
@@ -122,10 +127,17 @@ struct PW_LightRay
 	PW_Vector3D vStart;
 	PW_Vector3D vDir;
 	PW_Vector3D vNormal;
-	PW_Vector3D vOriDir;
+	PW_Vector3D vOriDir;//原入射光线
 };
 
-class PW_Mesh
+class PW_Object
+{
+public:
+	PW_Matrix4D m_matAbsTM;//世界矩阵
+	void SetAbsTM(PW_Matrix4D mat){ m_matAbsTM = mat; };
+};
+
+class PW_Mesh : public PW_Object
 {
 public:
 	PW_Vertex* buffer;
@@ -138,6 +150,7 @@ public:
 	PW_BOOL bHasMaterial;
 	PW_AABB curAABB;
 	PW_BOOL bUseVertexNormal;
+	
 
 	PW_Mesh() :buffer(NULL), indexbuffer(NULL), pointcount(0), indexcount(0), bHasMaterial(PW_FALSE), pNowBuffer(NULL), bUseVertexNormal(PW_FALSE)
 	{}
@@ -184,6 +197,8 @@ public:
 
 	void ComputeNormal();
 
+	
+
 	void Release()
 	{
 		if (buffer)
@@ -201,41 +216,6 @@ public:
 		pointcount = 0;
 		indexcount = 0;
 	}
-};
-
-enum PW_LIGHT_TYPE
-{
-	pw_lt_pointlight,
-	pw_lt_directionallight,
-	pw_lt_spotlight,
-};
-
-struct PW_Light
-{
-	PW_FLOAT fAttenuation0;
-	PW_FLOAT fAttenuation1;
-	PW_FLOAT fAttenuation2;
-	PW_COLORF cDiffuse;
-	PW_COLORF cAmbient;
-	PW_COLORF cSpecular;
-	PW_INT iLightType;
-	PW_Vector3D vPosition;
-	PW_Vector3D vDirection;
-	PW_FLOAT fRange;
-	PW_Vector3D vCurDir;
-	PW_Light()
-	{
-		fAttenuation0 = 0;
-		fAttenuation1 = 0;
-		fAttenuation2 = 0;
-		
-	}
-	PW_Light(PW_FLOAT p1, PW_FLOAT p2, PW_FLOAT p3, PW_COLORF cDif, PW_COLORF cAmb, PW_COLORF cSpe, PW_INT lightType,
-		PW_Vector3D pos, PW_Vector3D dir, PW_FLOAT fRan)
-		:fAttenuation0(p1), fAttenuation1(p2), fAttenuation2(p3),
-		cDiffuse(cDif), cAmbient(cAmb), cSpecular(cSpe), iLightType(lightType),
-		vPosition(pos), vDirection(dir), fRange(fRan)
-	{}
 };
 
 struct PW_Texture

@@ -84,6 +84,18 @@ struct PW_Vector3D
 		}
 	}
 
+	PW_BOOL IsZero()
+	{
+		if (abs(0.f - x) < EPSILON && abs(0.f - y) < EPSILON && abs(0.f - z) < EPSILON)
+		{
+			return PW_TRUE;
+		}
+		else
+		{
+			return PW_FALSE;
+		}
+	}
+
 	inline PW_BOOL operator>(PW_Vector3D& v3d)
 	{
 		return x > v3d.x && y > v3d.y && z > v3d.z;

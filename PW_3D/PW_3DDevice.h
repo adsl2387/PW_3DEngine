@@ -7,6 +7,7 @@
 #include "PW_Camera.h"
 
 #include "PW_Obj.h"
+#include "PW_Light.h"
 using namespace std;
 enum PW_DS
 {
@@ -34,16 +35,16 @@ public:
 
 	void DrawCircle(PW_FLOAT x, PW_FLOAT y, PW_FLOAT r, PW_COLOR pwColor = PW_RGB(255,255,255));
 
-	void SetWorldTransform(PW_Matrix4D& m){ m_worldMatrix = m; }
-	void SetViewTransform(PW_Matrix4D& m){ m_viewMatrix = m; }
-	void SetProjTransform(PW_Matrix4D& m){ m_projMatrix = m; }
+	//void SetWorldTransform(PW_Matrix4D& m){ m_worldMatrix = m; }
+	//void SetViewTransform(PW_Matrix4D& m){ m_viewMatrix = m; }
+//	void SetProjTransform(PW_Matrix4D& m){ m_projMatrix = m; }
 	void SetViewPortTransform(PW_Matrix4D& m){ m_viewportMatrix = m; }
 
 	void SetHelpOutputInfo(PW_FLOAT fRotate){ m_fRotate = fRotate; }
 	void SetDrawStyle(){ m_ds = pw_dscount - m_ds; }
 	void ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat);
 
-	void AddLight(PW_Light light){ m_vLights.push_back(light); m_bUseLight = true;}
+	void AddLight(PW_Light* pLight);
 
 	void SetAmbientColor(PW_COLORF amb){ m_Ambient = amb; }
 
@@ -127,14 +128,16 @@ protected:
 	inline PW_FLOAT GetViewZ(PW_FLOAT z)
 	{
 		PW_FLOAT z1 = (z + z) - 1.0f;
-		z1 = this->m_projMatrix[2][3] / (z1 - this->m_projMatrix[2][2]);
+		PW_Matrix4D projMatrix = this->m_Camera->GetProjMat();
+		z1 = projMatrix[2][3] / (z1 - projMatrix[2][2]);
 		return z1;
 	}
 
 	//¹Û²ìZµ½ÆÁÄ»Z
 	inline PW_FLOAT GetViewPortZ(PW_FLOAT z)
 	{
-		PW_FLOAT z1 = this->m_projMatrix[2][3] / z + this->m_projMatrix[2][2];
+		PW_Matrix4D projMatrix = this->m_Camera->GetProjMat();
+		PW_FLOAT z1 = projMatrix[2][3] / z + projMatrix[2][2];
 		z1 = z1 / 2.0f + 0.5f;
 		return z1;
 	}
@@ -148,9 +151,9 @@ protected:
 		zz = vScreen.z;
 		//PW_Vector3D vRes;
 		vRes.z = GetViewZ(zz);
-		//return vRes;
-		vRes.x = (xx - this->m_viewportMatrix[0][3]) / this->m_viewportMatrix[0][0] * vRes.z / this->m_projMatrix[0][0];
-		vRes.y = (yy - this->m_viewportMatrix[1][3]) / this->m_viewportMatrix[1][1] * vRes.z / this->m_projMatrix[1][1];
+		PW_Matrix4D projMatrix = this->m_Camera->GetProjMat();
+		vRes.x = (xx - this->m_viewportMatrix[0][3]) / this->m_viewportMatrix[0][0] * vRes.z / projMatrix[0][0];
+		vRes.y = (yy - this->m_viewportMatrix[1][3]) / this->m_viewportMatrix[1][1] * vRes.z / projMatrix[1][1];
 		
 		//return vRes;
 	}
@@ -179,9 +182,9 @@ private:
 	DWORD m_iFps;
 	DWORD m_iFcount;
 
-	PW_Matrix4D m_worldMatrix;
-	PW_Matrix4D m_viewMatrix;
-	PW_Matrix4D m_projMatrix;
+	//PW_Matrix4D m_worldMatrix;
+	//PW_Matrix4D m_viewMatrix;
+	//PW_Matrix4D m_projMatrix;
 	PW_Matrix4D m_viewportMatrix;
 	PW_FLOAT m_fRotate;
 	PW_Vector4D* m_v4dBuffer;
@@ -196,7 +199,7 @@ private:
 	bool m_bUseMaterial;
 	int m_4dBuffersize;
 	int m_ds;
-	vector<PW_Light> m_vLights;
+	vector<PW_Light*> m_vLights;
 	PW_COLORF m_Ambient;
 	PW_Texture* m_texture;
 

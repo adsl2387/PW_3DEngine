@@ -341,10 +341,7 @@ PW_BOOL PW_Mesh::RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir)
 		PW_Vector3D vNorrr;
 		if (RayInserctionPlane(lightRay.vStart, lightRay.vDir, tp, pinsert, vRef1, vRef2, fRer, vNorrr, bUseVertexNormal))
 		{
-			//if (i < 2)
-			//{
-			//	//printf("erron");
-			//}
+
 			PW_FLOAT fLen = (lightRay.vStart - pinsert).GetLen();
 			if (fLen < fMinLen && fLen > EPSILON * 1000.f)
 			{

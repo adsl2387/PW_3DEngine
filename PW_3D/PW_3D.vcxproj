@@ -90,6 +90,8 @@
     <ClCompile Include="PW_3D.cpp" />
     <ClCompile Include="PW_3DDevice.cpp" />
     <ClCompile Include="PW_Camera.cpp" />
+    <ClCompile Include="PW_AreaLight.cpp" />
+    <ClCompile Include="PW_Light.cpp" />
     <ClCompile Include="PW_Math.cpp" />
     <ClCompile Include="PW_Obj.cpp" />
     <ClCompile Include="PW_SphereMesh.cpp" />
@@ -102,6 +104,8 @@
     <ClInclude Include="PW_3D.h" />
     <ClInclude Include="PW_3DDevice.h" />
     <ClInclude Include="PW_Camera.h" />
+    <ClInclude Include="PW_AreaLight.h" />
+    <ClInclude Include="PW_Light.h" />
     <ClInclude Include="PW_Math.h" />
     <ClInclude Include="PW_Obj.h" />
     <ClInclude Include="PW_SphereMesh.h" />

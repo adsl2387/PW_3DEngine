@@ -7,7 +7,7 @@ public:
 	PW_Camera();
 	~PW_Camera();
 
-	void Init(PW_Vector3D vPos, PW_Vector3D vLookAt ,PW_Vector3D vUp);
+	void Init(PW_Vector3D vPos, PW_Vector3D vLookAt ,PW_Vector3D vUp, PW_FLOAT fFOV, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar);
 
 	//«∞∫Û“∆∂Ø
 	void MoveDirect(PW_FLOAT d);
@@ -28,10 +28,13 @@ public:
 	void Roll(PW_FLOAT d);
 
 	PW_Matrix4D GetViewMat(){ return m_viewMat; }
+
+	PW_Matrix4D GetProjMat(){ return m_projMat; }
 private:
 	PW_Matrix4D m_viewMat;
 	PW_Vector3D m_vPos;
 	PW_Vector3D m_vUp;
 	PW_Vector3D m_vLookAt;
+	PW_Matrix4D m_projMat;
 };
 

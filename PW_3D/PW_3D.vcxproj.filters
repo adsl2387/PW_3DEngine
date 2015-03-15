@@ -36,6 +36,12 @@
     <ClCompile Include="PW_SphereMesh.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PW_Light.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PW_AreaLight.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PW_3D.h">
@@ -63,6 +69,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PW_SphereMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PW_Light.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PW_AreaLight.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

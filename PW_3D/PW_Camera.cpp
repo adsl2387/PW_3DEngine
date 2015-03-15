@@ -8,9 +8,10 @@ PW_Camera::~PW_Camera()
 {
 }
 
-void PW_Camera::Init(PW_Vector3D vPos, PW_Vector3D vLookAt, PW_Vector3D vUp)
+void PW_Camera::Init(PW_Vector3D vPos, PW_Vector3D vLookAt, PW_Vector3D vUp, PW_FLOAT fFOV, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar)
 {
 	PW_ViewMatrix(m_viewMat, vPos, vLookAt, vUp);
+	PW_ProjMatrix(m_projMat, fFOV, fRate, fNear, fFar);
 }
 
 void PW_Camera::MoveDirect(PW_FLOAT d)
