@@ -38,7 +38,7 @@ PW_COLORF PW_Light::RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_Vecto
 	PW_FLOAT fRes = PW_DotProduct(lightdir, vNormal);
 	if (fRes > EPSILON)
 	{
-		fRet = fRet + m_cDiffuse * fRes;
+		fRet = fRet + m_cDiffuse * fRes * pMeshs[nMeshIndex]->material.cDiffuse;
 	}
 
 	//相机总是在0,0,0
@@ -47,11 +47,11 @@ PW_COLORF PW_Light::RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_Vecto
 	vP = vP + lightdir;
 	vP.Normalize();
 	PW_FLOAT fTmp = PW_DotProduct(vNormal, vP);
-	fTmp = pow(fTmp, pMeshs[nMeshIndex].material.fP);
+	fTmp = pow(fTmp, pMeshs[nMeshIndex]->material.fP);
 	if (fTmp > 0)
 	{
-		fRet = fRet + m_cSpecular * fTmp;
+		fRet = fRet + m_cSpecular * fTmp * pMeshs[nMeshIndex]->material.cSpecularReflection;
 	}
-	fRet += m_cAmbient;
+	fRet += m_cAmbient * pMeshs[nMeshIndex]->material.cAmbient;
 	return fRet;
 }
