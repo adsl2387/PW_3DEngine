@@ -22,7 +22,7 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
-PW_3DDevice g_PW3DDevice;
+
 PW_Mesh g_PWMesh;
 PW_SphereMesh g_sphereMesh;
 PW_SphereMesh g_sphereMesh1;

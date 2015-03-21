@@ -182,8 +182,8 @@ struct PW_Vector4D
 		:x(fx),y(fy),z(fz),w(fw)
 	{}
 
-	PW_Vector4D(PW_Vector3D& vec)
-		:x(vec.x),y(vec.y),z(vec.z),w(1.f)
+	PW_Vector4D(PW_Vector3D& vec, PW_FLOAT fW = 1.f)
+		:x(vec.x),y(vec.y),z(vec.z),w(fW)
 	{}
 
 	void MatrixProduct(PW_Matrix4D& mat);
@@ -238,6 +238,14 @@ struct PW_COLORF
 		ret.g = g + c.g;
 		ret.a = a + c.a;
 		return ret;
+	}
+
+	void operator+= (PW_COLORF& c)
+	{
+		r += c.r;
+		g += c.g;
+		b += c.b;
+		a += c.a;
 	}
 
 	PW_COLOR operator*(PW_COLOR pwColor)

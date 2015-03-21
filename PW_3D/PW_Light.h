@@ -41,8 +41,10 @@ public:
 		m_vPosition(pos), m_vDirection(dir), m_fRange(fRan)
 	{}
 
-	virtual PW_COLORF GetDiffuse(PW_Vector3D* vPos = NULL);
+	virtual PW_COLORF GetDiffuse(PW_Vector3D* vPos );
 
-	virtual PW_COLORF GetSpecular(PW_Vector3D* vPos = NULL);
+	virtual PW_COLORF GetSpecular(PW_Vector3D* vPos );
+
+	virtual PW_COLORF RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_Vector3D& vNormal, PW_Vector3D& vOriDir);
 
 };

@@ -19,6 +19,8 @@ enum PW_DS
 class PW_3DDevice
 {
 public:
+
+	static PW_3DDevice* GetSingleton();
 	bool Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit);
 	void Release();
 	
@@ -80,6 +82,8 @@ public:
 			m_bUseTexture = true;
 		}
 	}
+
+	vector<PW_Mesh*>& GetAllMeshs(){ return m_pMeshs; }
 	
 	void SwitchShowAll(){m_bShowAll = !m_bShowAll;}
 
@@ -112,6 +116,8 @@ protected:
 	void DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3, PW_COLOR color, int ds = wireframe);
 	void DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3);
 	void Present();
+
+
 	
 	inline PW_FLOAT GetValueOfZBuffer(PW_INT x, PW_INT y){ return m_pZBuffer[y * m_iWidth + x]; }
 	inline void SetValueOfZBuffer(PW_INT x, PW_INT y, PW_FLOAT v){ m_pZBuffer[y * m_iWidth + x] = v; }
@@ -216,5 +222,6 @@ private:
 	int m_bWrite;
 	//VE
 };
-
+PW_3DDevice g_PW3DDevice;
+PW_3DDevice* g_pPW3DDevice = &g_PW3DDevice;
 //#endif

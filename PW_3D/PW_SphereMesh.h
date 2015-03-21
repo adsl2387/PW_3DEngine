@@ -14,6 +14,8 @@ public:
 
 	virtual void ComputeCurVertex();
 
+	virtual PW_FLOAT GetRadius(){ return m_fRadius; }
+
 	PW_Vector3D m_vPosInView;
 	PW_Vector3D m_vOriPos;
 	PW_FLOAT m_fRadius;

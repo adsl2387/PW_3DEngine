@@ -19,6 +19,8 @@ PW_3DDevice::~PW_3DDevice()
 	this->Release();
 }
 
+
+
 bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 {
 	m_nMaxDepth = 4;

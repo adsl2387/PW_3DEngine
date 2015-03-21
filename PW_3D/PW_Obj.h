@@ -163,6 +163,8 @@ public:
 
 	virtual PW_BOOL RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir);
 
+	virtual PW_FLOAT GetRadius(){ return curAABB.Extents.GetLen(); };
+
 	void SetMaterial(PW_Material m)
 	{
 		material = m;

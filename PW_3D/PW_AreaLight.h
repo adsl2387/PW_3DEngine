@@ -10,7 +10,7 @@ public:
 	virtual PW_COLORF GetSpecular(PW_Vector3D* vPos = NULL);
 	virtual void SetMesh(PW_Mesh* pMesh);
 	virtual PW_Mesh* GetMesh(){ return m_pMesh; }
-	void GetShadowRays(PW_Vector3D* vStarts, PW_Vector3D* vDirs);
+	void GetShadowRays(PW_Vector3D& vPoint, PW_Vector3D* vStarts, PW_Vector3D* vDirs);
 protected:
 	PW_Mesh* m_pMesh;
 	PW_INT m_nShadowRayNum;
