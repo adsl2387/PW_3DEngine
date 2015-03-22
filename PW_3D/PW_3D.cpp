@@ -166,7 +166,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    {
       return FALSE;
    }
-   g_PW3DDevice.Create(hWnd, WNDWIDTH, WNDHEIGHT, hEdit);
+   g_pPW3DDevice->Create(hWnd, WNDWIDTH, WNDHEIGHT, hEdit);
    ShowWindow(hWnd, nCmdShow);
    ShowWindow(hEdit, SW_SHOW);
    UpdateWindow(hWnd);
@@ -271,22 +271,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			b_gStopRotate = !b_gStopRotate;
 			break;
 		case 'x':
-			g_PW3DDevice.SwitchMaterial();
+			g_pPW3DDevice->SwitchMaterial();
 			break;
 		case 'g':
-			g_PW3DDevice.SwitchLight();
+			g_pPW3DDevice->SwitchLight();
 			break;
 		case 'h':
-			g_PW3DDevice.SwitchTexture();
+			g_pPW3DDevice->SwitchTexture();
 			break;
 		case 'j':
-			g_PW3DDevice.SwitchTextFilter();
+			g_pPW3DDevice->SwitchTextFilter();
 			break;
 		case 'r':
-			g_PW3DDevice.SwitchRayTrace();
+			g_pPW3DDevice->SwitchRayTrace();
 			break;
 		default:
-			g_PW3DDevice.SetDrawStyle();
+			g_pPW3DDevice->SetDrawStyle();
 			break;
 		}
 		break;
@@ -317,8 +317,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		nWidth = LOWORD(lParam); // width of client area
 		nHeight = HIWORD(lParam); // height of client area
 		
-		g_PW3DDevice.Release();
-		g_PW3DDevice.Create(hWnd, nWidth, nHeight, hWnd);
+		g_pPW3DDevice->Release();
+		g_pPW3DDevice->Create(hWnd, nWidth, nHeight, hWnd);
 		break;
 	case  WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
@@ -363,7 +363,7 @@ void InitScene()
 	{
 		if (g_PWTexture.LoadBitmap("tietu3.bmp"))
 		{
-			g_PW3DDevice.SetTexture(&g_PWTexture);
+			g_pPW3DDevice->SetTexture(&g_PWTexture);
 		}
 
 		PW_POINT3D* buffer = new PW_POINT3D[8];
@@ -387,10 +387,10 @@ void InitScene()
 		buffer1[7] = PW_POINT3D(0, 10, 10, PW_RGBA(123, 0, 0));
 
 		PW_POINT3D* groundbuffer = new PW_POINT3D[4];
-		groundbuffer[0] = PW_POINT3D(-100, -100, -200, PW_RGBA(255, 0, 0));
-		groundbuffer[1] = PW_POINT3D(-100, -100, 200, PW_RGBA(255, 0, 0));
-		groundbuffer[2] = PW_POINT3D(100, -100, 200, PW_RGBA(255, 0, 0));
-		groundbuffer[3] = PW_POINT3D(100, -100, -200, PW_RGBA(255, 0, 0));
+		groundbuffer[0] = PW_POINT3D(-100, -0, -200, PW_RGBA(255, 0, 0));
+		groundbuffer[1] = PW_POINT3D(-100, -0, 200, PW_RGBA(255, 0, 0));
+		groundbuffer[2] = PW_POINT3D(100, -0, 200, PW_RGBA(255, 0, 0));
+		groundbuffer[3] = PW_POINT3D(100, -0, -200, PW_RGBA(255, 0, 0));
 		PW_Triangle* indexbuffer = new PW_Triangle[12];
 		PW_Triangle* groundindexbuffer = new PW_Triangle[2];
 		int indexbbb[12][3] =
@@ -476,18 +476,18 @@ void InitScene()
 		g_PWMesh.SetBuffer(buffer, indexbuffer, 8, numface);
 		g_PWMesh2.SetBuffer(buffer1, indexbuffer, 8, numface);
 		g_PWMesh_Ground.SetBuffer(groundbuffer, groundindexbuffer, 4, 2);
-		g_sphereMesh.InitSphere(PW_Vector3D(0.f, 0.f, 20.f), 10.f);
-		g_sphereMesh1.InitSphere(PW_Vector3D(-20.f, 20.f, 0.f), 10.f);
+		g_sphereMesh.InitSphere(PW_Vector3D(0.f, 30.f, 20.f), 10.f);
+		g_sphereMesh1.InitSphere(PW_Vector3D(0.f, 60.f, 20.f), 10.f);
 		PW_Material mater;
-		mater.fP = 1;
+		mater.fP = 15;
 		mater.fRef = 0.f;
 		mater.cAmbient = PW_COLORF(0.f, 0.f, 0.f, 0.f);
 		mater.cDiffuse = PW_COLORF(0.2f, 0.3f, 0.4f);
 		mater.cSpecularReflection = PW_COLORF(0.3f, 0.3f, 0.3f);
-		g_PW3DDevice.SetMaterial(&mater);
+		g_pPW3DDevice->SetMaterial(&mater);
 		static PW_Light light, light2;
 		static PW_AreaLight arealight;
-		arealight.m_vPosition = PW_Vector3D(-20.f, 20.f, 0.f);
+		arealight.m_vPosition = PW_Vector3D(0.f, 60.f, 20.f);
 		arealight.m_vDirection = PW_Vector3D(0, -1, 0);
 		arealight.m_cSpecular = PW_COLORF(1.f, 1.f, 1.f);
 		arealight.m_cAmbient = PW_COLORF(0.1f, 0.1f, 0.1f);
@@ -498,21 +498,21 @@ void InitScene()
 		light.m_vPosition = PW_Vector3D(0, 100, 0);
 		light.m_vDirection = PW_Vector3D(0, -1, 0);
 		light.m_cSpecular = PW_COLORF(1.f, 1.f, 1.f);
-		light.m_cAmbient = PW_COLORF(0.1f, 0.1f, 0.1f);
+		light.m_cAmbient = PW_COLORF(1.f, 1.f, 1.f);
 		light.m_cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
 		light2 = light;
 		light2.m_iLightType = pw_lt_pointlight;
-		//g_PW3DDevice.AddLight(&light);
-		//g_PW3DDevice.AddLight(&light2);
-		g_PWCamera.Init(PW_Vector3D(0, 50, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
+		//g_pPW3DDevice->AddLight(&light);
+		//g_pPW3DDevice->AddLight(&light2);
+		g_PWCamera.Init(PW_Vector3D(0, 70, -200), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
 			PI / 4, 1.0f, 1.f, 1000.f);
-		g_PW3DDevice.SetCamera(&g_PWCamera);
-		g_PW3DDevice.SetAmbientColor(PW_COLORF(0.1, 0.1, 0.1));
+		g_pPW3DDevice->SetCamera(&g_PWCamera);
+		g_pPW3DDevice->SetAmbientColor(PW_COLORF(0.1, 0.1, 0.1));
 		g_PWMesh.SetMaterial(mater);
 		g_sphereMesh.SetMaterial(mater);
 		g_sphereMesh1.SetMaterial(mater);
 		PW_Material mater0;
-		mater0.fP = 1.f;
+		mater0.fP = 15.f;
 		mater0.fRef = 0.f;
 		g_PWMesh2.SetMaterial(mater0);
 		g_PWMesh.UseVertexNormal(PW_TRUE);
@@ -521,13 +521,13 @@ void InitScene()
 		PW_Material groundmaterial;
 		groundmaterial.cAmbient = PW_COLORF(0.01f, 0.01f, 0.01f);
 		groundmaterial.cDiffuse = PW_COLORF(0.1f, 0.3f, 0.1f);
-		groundmaterial.cSpecularReflection = PW_COLORF(0.6f, 0.6f, 0.6f);
-		groundmaterial.fP = 1.f;
+		groundmaterial.cSpecularReflection = PW_COLORF(0.f, 0.f, 0.f);
+		groundmaterial.fP = 15.f;
 		groundmaterial.fRef = 0.f;
 		g_PWMesh_Ground.SetMaterial(groundmaterial);
-		g_PW3DDevice.SetRayTrace();
+		g_pPW3DDevice->SetRayTrace();
 		arealight.SetMesh(&g_sphereMesh1);
-		g_PW3DDevice.AddLight(&arealight);
+		g_pPW3DDevice->AddLight(&arealight);
 	}
 }
 
@@ -546,7 +546,7 @@ void RenderScene()
 		//fr = 0.7299 * 2 * PI;
 		//fr = 0;
 		//fr = PI / 8 ;
-		g_PW3DDevice.SetHelpOutputInfo(fr);
+		g_pPW3DDevice->SetHelpOutputInfo(fr);
 	}
 	
 	
@@ -555,7 +555,7 @@ void RenderScene()
 	identymatrix.IdentityMatrix();
 	//g_PW3DDevice.SetWorldTransform(identymatrix);
 	g_PWMesh_Ground.SetAbsTM(identymatrix);
-	g_PW3DDevice.DrawMesh(g_PWMesh_Ground);
+	g_pPW3DDevice->DrawMesh(g_PWMesh_Ground);
 	
 	//mesh 1
 	PW_Matrix4D rotatemat;
@@ -579,8 +579,8 @@ void RenderScene()
 	//g_PW3DDevice.DrawMesh(g_PWMesh);
 	g_sphereMesh.SetAbsTM(rotatemat);
 	g_sphereMesh1.SetAbsTM(rotatemat);
-	g_PW3DDevice.DrawMesh(g_sphereMesh);
-	g_PW3DDevice.DrawMesh(g_sphereMesh1);
+	g_pPW3DDevice->DrawMesh(g_sphereMesh);
+	g_pPW3DDevice->DrawMesh(g_sphereMesh1);
 	//mesh2
 	
 	//PW_RotateByXMatrix(rotatemat, 0 * PI / 4.0f);
@@ -598,19 +598,19 @@ void RenderScene()
 	//g_PW3DDevice.SetViewTransform(wordmat);
 	//PW_ProjMatrix(wordmat, PI / 4,1.f, 1, 1000);
 	//g_PW3DDevice.SetProjTransform(wordmat);
-	PW_ViewPortMatrix(wordmat, g_PW3DDevice.m_fWidth, g_PW3DDevice.m_fHeight);
-	g_PW3DDevice.SetViewPortTransform(wordmat);
+	PW_ViewPortMatrix(wordmat, g_pPW3DDevice->m_fWidth, g_pPW3DDevice->m_fHeight);
+	g_pPW3DDevice->SetViewPortTransform(wordmat);
 	//g_PW3DDevice.SetAmbientColor(PW_COLORF(0., 0, 0.5));
 	//g_PW3DDevice.DrawMesh(g_PWMesh2);
 //	g_PW3DDevice.DrawCircle(250, 250, 100);
 	//g_PW3DDevice.DrawEllipse(250, 250, 150, 100);
 
 
-	g_PW3DDevice.Render();
+	g_pPW3DDevice->Render();
 }
 
 void Release()
 {
-	g_PW3DDevice.Release();
+	g_pPW3DDevice->Release();
 	g_PWMesh.Release();
 }

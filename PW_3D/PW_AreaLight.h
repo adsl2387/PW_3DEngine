@@ -16,5 +16,6 @@ public:
 protected:
 	PW_Mesh* m_pMesh;
 	PW_INT m_nShadowRayNum;
+	PW_INT m_nShadowRayCircleNum;
 };
 

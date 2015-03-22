@@ -16,6 +16,8 @@ enum PW_DS
 	pw_dscount,
 };
 
+extern PW_BOOL gBFlag ;
+
 class PW_3DDevice
 {
 public:
@@ -89,7 +91,16 @@ public:
 
 	void EnableLight(bool bUse){m_bUseLight = bUse;}
 	void SwitchTextFilter(){ m_bUseBiliner = !m_bUseBiliner; }
-	void SetCamera(PW_Camera* car){ m_Camera = car; }
+	void SetCamera(PW_Camera* car){ m_pCamera = car; }
+
+	//根据顶点颜色插值画线
+	void DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
+
+	void DrawLine3D(PW_POINT3D point1, PW_POINT3D point2);
+
+	PW_Camera* GetCamera(){ return m_pCamera; }
+
+	PW_Matrix4D GetViewportMatrix(){ return m_viewportMatrix; }
 
 	PW_Vector4D GetOriPos(PW_FLOAT x, PW_FLOAT y, PW_FLOAT z);
 	PW_3DDevice();
@@ -108,8 +119,7 @@ protected:
 	//void DrawPoint(PW_POINT point, PW_COLOR pwcolor);
 	//void DrawLine(PW_POINTF point1, PW_POINTF point2, PW_COLOR color, int isolid = 1);
 
-	//根据顶点颜色插值画线
-	void DrawLine(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
+
 
 	//根据纹理
 	void DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
@@ -134,7 +144,7 @@ protected:
 	inline PW_FLOAT GetViewZ(PW_FLOAT z)
 	{
 		PW_FLOAT z1 = (z + z) - 1.0f;
-		PW_Matrix4D projMatrix = this->m_Camera->GetProjMat();
+		PW_Matrix4D projMatrix = this->m_pCamera->GetProjMat();
 		z1 = projMatrix[2][3] / (z1 - projMatrix[2][2]);
 		return z1;
 	}
@@ -142,7 +152,7 @@ protected:
 	//观察Z到屏幕Z
 	inline PW_FLOAT GetViewPortZ(PW_FLOAT z)
 	{
-		PW_Matrix4D projMatrix = this->m_Camera->GetProjMat();
+		PW_Matrix4D projMatrix = this->m_pCamera->GetProjMat();
 		PW_FLOAT z1 = projMatrix[2][3] / z + projMatrix[2][2];
 		z1 = z1 / 2.0f + 0.5f;
 		return z1;
@@ -157,7 +167,7 @@ protected:
 		zz = vScreen.z;
 		//PW_Vector3D vRes;
 		vRes.z = GetViewZ(zz);
-		PW_Matrix4D projMatrix = this->m_Camera->GetProjMat();
+		PW_Matrix4D projMatrix = this->m_pCamera->GetProjMat();
 		vRes.x = (xx - this->m_viewportMatrix[0][3]) / this->m_viewportMatrix[0][0] * vRes.z / projMatrix[0][0];
 		vRes.y = (yy - this->m_viewportMatrix[1][3]) / this->m_viewportMatrix[1][1] * vRes.z / projMatrix[1][1];
 		
@@ -174,7 +184,7 @@ protected:
 		this->m_pBitBuffer[y * m_iWidth + x] = pwColor;
 	}
 private:
-	PW_Camera* m_Camera;
+	PW_Camera* m_pCamera;
 	int m_nCurNodePos;
 	HWND m_hWnd;
 	int m_iWidth;
@@ -222,6 +232,5 @@ private:
 	int m_bWrite;
 	//VE
 };
-PW_3DDevice g_PW3DDevice;
-PW_3DDevice* g_pPW3DDevice = &g_PW3DDevice;
+extern PW_3DDevice* g_pPW3DDevice;
 //#endif

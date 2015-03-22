@@ -1,6 +1,10 @@
 #include "PW_3DDevice.h"
 #include <stdlib.h>
 #include <stdio.h>
+
+PW_3DDevice g_PW3DDevice;
+PW_3DDevice* g_pPW3DDevice = &g_PW3DDevice;
+PW_BOOL gBFlag = PW_FALSE;
 PW_3DDevice::PW_3DDevice()
 {
 	m_pBitBuffer = NULL;
@@ -23,7 +27,7 @@ PW_3DDevice::~PW_3DDevice()
 
 bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 {
-	m_nMaxDepth = 4;
+	m_nMaxDepth = 2;
 	m_bRayTrace = PW_FALSE;
 	m_bWrite = 0;
 	m_nCurNodePos = 0;
@@ -277,7 +281,13 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 	}
 }
 
-void PW_3DDevice::DrawLine(PW_POINT3D point1, PW_POINT3D point2, int isolid)
+
+void PW_3DDevice::DrawLine3D(PW_POINT3D point1, PW_POINT3D point2)
+{
+
+}
+
+void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid)
 {
 	if (!m_pBitBuffer)
 	{
@@ -376,7 +386,7 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 	m_bShow = 0;
 	PW_Matrix4D tran;
 	PW_Matrix4D tran1;
-	PW_MatrixProduct4D(m_Camera->GetViewMat(), mesh.m_matAbsTM, tran);
+	PW_MatrixProduct4D(m_pCamera->GetViewMat(), mesh.m_matAbsTM, tran);
 
 	if (m_bRayTrace)
 	{
@@ -542,7 +552,7 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	}
 	PW_Vector4D p1, p2, p3;
 	PW_Matrix4D tan, projMatrix;
-	projMatrix = this->m_Camera->GetProjMat();
+	projMatrix = this->m_pCamera->GetProjMat();
 	p1 = point1.MatrixProduct(projMatrix);
 	p2 = point2.MatrixProduct(projMatrix);
 	p3 = point3.MatrixProduct(projMatrix);
@@ -554,19 +564,19 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	p3.MatrixProduct(m_viewportMatrix);
 	
 	//计算光强
-	ComputeLight(point1, m_Camera->GetViewMat());
-	ComputeLight(point2, m_Camera->GetViewMat());
-	ComputeLight(point3, m_Camera->GetViewMat());
+	ComputeLight(point1, m_pCamera->GetViewMat());
+	ComputeLight(point2, m_pCamera->GetViewMat());
+	ComputeLight(point3, m_pCamera->GetViewMat());
 	
 	if (ds == wireframe)
 	{
 		//if (dotRes > 0)
 		{
-			DrawLine(PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP)
+			DrawLine2D(PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP)
 				, PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP));
-			DrawLine(PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP)
+			DrawLine2D(PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP)
 				, PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP));
-			DrawLine(PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP)
+			DrawLine2D(PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP)
 				, PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP));
 		}
 	}
@@ -671,7 +681,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 			DrawLineTexture(pps[0], pps[0]);
 		}
 		else
-			DrawLine(pps[0], pps[0]);
+			DrawLine2D(pps[0], pps[0]);
 		
 		for (int k = 0; k < dy1;++k)
 		{
@@ -731,7 +741,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 				DrawLineTexture(p1, p2);
 			}
 			else
-				DrawLine(p1, p2);
+				DrawLine2D(p1, p2);
 		}
 		
 	}
@@ -830,7 +840,7 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 				DrawLineTexture(p1, p2);
 			}
 			else
-				DrawLine(p1, p2);
+				DrawLine2D(p1, p2);
 		}
 	}
 }
@@ -841,7 +851,7 @@ PW_Vector4D PW_3DDevice::GetOriPos(PW_FLOAT x, PW_FLOAT y, PW_FLOAT z)
 	PW_FLOAT x1 = (x + x) / m_fWidth - 1.0f;
 	PW_FLOAT y1 = 1.0f - (y + y) / m_fHeight;
 	PW_FLOAT z1 = (z + z) - 1.0f;
-	PW_Matrix4D projMatrix = this->m_Camera->GetProjMat();
+	PW_Matrix4D projMatrix = this->m_pCamera->GetProjMat();
 	v3d.z = projMatrix[2][3] / (z1 - projMatrix[2][2]);
 	v3d.x = x1 * v3d.z;
 	v3d.y = y1 * v3d.z;
@@ -1074,22 +1084,22 @@ void PW_3DDevice::UpdateCurLight()
 		}
 		else if (m_vLights[i]->m_iLightType == pw_lt_pointlight)
 		{
-			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(m_Camera->GetViewMat());
+			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(m_pCamera->GetViewMat());
 			lightdir = vP;
 			m_vLights[i]->m_vCurDir = vP;
 			//lightdir.Normalize();
 		}
 		else if (m_vLights[i]->m_iLightType == pw_lt_arealight)
 		{
-			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(m_Camera->GetViewMat());
+			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(m_pCamera->GetViewMat());
 			lightdir = vP;
 			m_vLights[i]->m_vCurDir = vP;
 		}
 		else
 		{
 			PW_Vector3D vOri;
-			vOri = vOri.MatrixProduct(m_Camera->GetViewMat());
-			PW_Vector3D vP = m_vLights[i]->m_vDirection.MatrixProduct(m_Camera->GetViewMat());
+			vOri = vOri.MatrixProduct(m_pCamera->GetViewMat());
+			PW_Vector3D vP = m_vLights[i]->m_vDirection.MatrixProduct(m_pCamera->GetViewMat());
 			lightdir = vOri - vP;
 			lightdir.Normalize();
 			m_vLights[i]->m_vCurDir = lightdir;
@@ -1120,8 +1130,14 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 	cS = 0;
 	PW_FLOAT fSpe = 0;
 	PW_COLORF cRet;//光强
+#define RAYTRACELIGHT
 	for (int i = 0; i < m_vLights.size(); ++i)
 	{
+#ifdef RAYTRACELIGHT
+		cRet += m_vLights[i]->RayTraceColor(pNode->Light.vStart, pNode->nMeshIndex, pNode->Light.vNormal, pNode->Light.vOriDir);
+#else
+
+		
 		PW_FLOAT par = 1.0f;
 		PW_Vector3D lightdir;
 		if (m_vLights[i]->m_iLightType == pw_lt_spotlight)
@@ -1167,7 +1183,7 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 			vP = vP + lightdir;
 			vP.Normalize();
 			PW_FLOAT fTmp = PW_DotProduct(pNode->Light.vNormal, vP);
-			fTmp =  pow(fTmp, 15);
+			fTmp = pow(fTmp, m_pMeshs[pNode->nMeshIndex]->material.fP);
 			if (fTmp > 0)
 			{
 				cS = cS + m_vLights[i]->GetSpecular(&pNode->Light.vStart) * fTmp;
@@ -1176,12 +1192,18 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 
 
 		cP = cP + m_vLights[i]->m_cAmbient;
+#endif // RAYTRACELIGHT
 	}
+#ifndef RAYTRACELIGHT
 	cAmbient = pNode->Light.cAmbient * cP;
 	cDiffuse = pNode->Light.cDiffuse * cD;
 	cSpecular = pNode->Light.cSpecularReflection * cS;
 
 	cRet = cAmbient + cDiffuse + cSpecular;
+#endif // RAYTRACELIGHT
+
+
+
 	return cRet;
 }
 
@@ -1292,10 +1314,22 @@ void PW_3DDevice::RayTrace()
 	PW_Vector3D raystart, rayend;
 	PW_INT nOutD = 0;
 	PW_FLOAT flen;
-	for (int x = 0; x < this->m_iWidth; x++)
+	for (int x = 0; x <  this->m_iWidth; x++)
 	{
 		for (int y = 0; y < this->m_iHeight; y++)
 		{
+#ifdef AREATEST
+			if (x == 396 && y == 334)
+			{
+				gBFlag = PW_TRUE;
+			}
+			else
+			{
+				gBFlag = PW_FALSE;
+			}
+#endif // AREATEST
+
+			
 			m_nCurNodePos = 0;
 			raystart.x = x;
 			raystart.y = y;

@@ -32,7 +32,7 @@ PW_COLORF PW_Light::RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_Vecto
 	{
 		if (ii != nMeshIndex &&!pMeshs[ii]->material.bEmissive && pMeshs[ii]->RayInsertion(vPos, lightdir))
 		{
-			return fRet;
+			return fRet + m_cAmbient * pMeshs[nMeshIndex]->material.cAmbient;
 		}
 	}
 	PW_FLOAT fRes = PW_DotProduct(lightdir, vNormal);
