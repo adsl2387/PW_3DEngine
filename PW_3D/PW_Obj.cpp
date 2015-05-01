@@ -312,7 +312,7 @@ PW_BOOL PW_Mesh::RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir)
 	return PW_FALSE;
 }
 
- PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2)
+PW_BOOL PW_Mesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2, PW_BOOL bCompRef)
 {
 	if (!RayInsertAABB(lightRay))
 	{

@@ -56,9 +56,12 @@ struct PW_Material
 	PW_COLORF cSpecularReflection;
 	PW_FLOAT fP;//高光指数   实时渲染中用
 	PW_FLOAT fRef;
+	PW_FLOAT fTransparency;//透明度
 
 	PW_Material() :
-		bEmissive(PW_FALSE)
+		bEmissive(PW_FALSE),
+		fP(1.f),
+		fTransparency(0.f)
 	{};
 };
 
@@ -159,11 +162,13 @@ public:
 
 	virtual PW_BOOL RayInsertAABB(PW_LightRay& lightRay);
 
-	virtual PW_BOOL RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2);
+	virtual PW_BOOL RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLight1, PW_LightRay& reflectLight2, PW_BOOL bCompRef = PW_TRUE);
 
 	virtual PW_BOOL RayInsertion(PW_Vector3D& vStart, PW_Vector3D& vDir);
 
 	virtual PW_FLOAT GetRadius(){ return curAABB.Extents.GetLen(); };
+
+	virtual PW_Vector3D GetPos(){ return curAABB.Center; }
 
 	void SetMaterial(PW_Material m)
 	{
@@ -369,7 +374,9 @@ struct PW_RayTraceNode
 	PW_RayTraceNode* pRight;
 	PW_INT nMeshIndex;
 
-	PW_RayTraceNode() :pLeft(NULL), pRight(NULL), bInsert(PW_FALSE), nMeshIndex(-1)
+	PW_BOOL bDrawPath;
+
+	PW_RayTraceNode() :pLeft(NULL), pRight(NULL), bInsert(PW_FALSE), nMeshIndex(-1), bDrawPath(PW_FALSE)
 	{}
 };
 //#endif

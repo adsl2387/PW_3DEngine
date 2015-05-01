@@ -16,6 +16,8 @@ PW_3DDevice::PW_3DDevice()
 	m_bUseLight = false;
 	m_bUseBiliner = false;
 	m_bRayTrace = false;
+	m_nDrawX = -1;
+	m_nDrawY = -1;
 }
 
 PW_3DDevice::~PW_3DDevice()
@@ -27,7 +29,7 @@ PW_3DDevice::~PW_3DDevice()
 
 bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 {
-	m_nMaxDepth = 2;
+	m_nMaxDepth = 5;
 	m_bRayTrace = PW_FALSE;
 	m_bWrite = 0;
 	m_nCurNodePos = 0;
@@ -287,7 +289,7 @@ void PW_3DDevice::DrawLine3D(PW_POINT3D point1, PW_POINT3D point2)
 
 }
 
-void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid)
+void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid, PW_BOOL bEnableZ)
 {
 	if (!m_pBitBuffer)
 	{
@@ -310,7 +312,7 @@ void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid)
 		steps = abs(dy);
 	if (!(ROUND(point1.y) < 0 || ROUND(point1.y) >= m_iHeight || ROUND(point1.x) < 0 || ROUND(point1.x) >= m_iWidth))
 	{
-		if (m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] - point1.z> 0)
+		if (!bEnableZ || m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] - point1.z> 0)
 		{
 			PW_COLOR pwColor = point1.pwColor;
 			if (m_bUseTexture)
@@ -371,7 +373,7 @@ void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid)
 		}
 		PW_FLOAT fdz = 1.f / fz;
 		PW_FLOAT fsz = GetViewPortZ(fdz);
-		if (m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] - fsz> 0)
+		if (!bEnableZ || m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] - fsz> 0)
 		{	
 			PW_COLOR pwColor =  PW_RGBA(ROUND(fr * fdz), ROUND(fg * fdz), ROUND(fb * fdz));
 			m_pBitBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] = pwColor;
@@ -390,7 +392,6 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 
 	if (m_bRayTrace)
 	{
-		//PW_Mesh me = mesh;
 		mesh.m_absoluteTM = tran;
 		m_pMeshs.push_back(&mesh);
 		return;
@@ -399,13 +400,14 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 	{
 		return;
 	}
+	PW_Vector3D pwOri;
+	pwOri = pwOri.MatrixProduct(tran);
 	for (int i = 0; i < mesh.pointcount;++i)
 	{
 		m_v4dBuffer[i] = mesh.buffer[i].MatrixProduct(tran);
 		m_vNormalsBuffer[i] = mesh.buffer[i].vNormal.MatrixProduct(tran);
 		m_v4dBuffer[i].pwColor = mesh.buffer[i].pwColor;
-		PW_Vector3D pwOri;
-		pwOri = pwOri.MatrixProduct(tran);
+
 		m_vNormalsBuffer[i] = m_vNormalsBuffer[i] - pwOri;
 		m_vNormalsBuffer[i].Normalize();
 		
@@ -420,23 +422,6 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 			, PW_POINT3D(m_v4dBuffer[index3], mesh.buffer[index3].pwColor, m_vNormalsBuffer[index3], mesh.indexbuffer[i].u3, mesh.indexbuffer[i].v3), PW_RGBA(255, 0, 0), m_ds);
 	
 	}
-	//for (int i = 0; i < mesh.pointcount;i++)
-	//{
-	//	PW_Vector3D start = m_v4dBuffer[i];
-	//	PW_Vector3D end = start + m_vNormalsBuffer[i] * 50;
-	//	PW_Vector4D p1, p2, p3;
-	//	PW_Matrix4D tan;
-	//	p1 = start.MatrixProduct(m_projMatrix);
-	//	p2 = end.MatrixProduct(m_projMatrix);
-	//	//p3 = point3.MatrixProduct(m_projMatrix);
-	//	p1.NoneHomogeneous();
-	//	p2.NoneHomogeneous();
-	//	//p3.NoneHomogeneous();
-	//	p1.MatrixProduct(m_viewportMatrix);
-	//	p2.MatrixProduct(m_viewportMatrix);
-	////	p3.MatrixProduct(m_viewportMatrix);
-	//	DrawLine(PW_POINT3D(p1, PW_RGBA(200, 200, 200)), PW_POINT3D(p2, PW_RGBA(200, 200, 200)));
-	//}
 }
 
 void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
@@ -1134,7 +1119,7 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 	for (int i = 0; i < m_vLights.size(); ++i)
 	{
 #ifdef RAYTRACELIGHT
-		cRet += m_vLights[i]->RayTraceColor(pNode->Light.vStart, pNode->nMeshIndex, pNode->Light.vNormal, pNode->Light.vOriDir);
+		cRet += m_vLights[i]->RayTraceColor(pNode->Light.vStart, pNode->Light ,pNode->nMeshIndex, pNode->Light.vNormal, pNode->Light.vOriDir);
 #else
 
 		
@@ -1218,16 +1203,30 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 	{
 		return m_Ambient;
 	}
+	if (pNode->bDrawPath)
+	{
+		PW_Vector4D vSS = pNode->Light.vStart.MatrixProduct(m_pCamera->GetProjMat());
+		PW_Vector4D vEE = (pNode->Light.vDir * 10.f + pNode->Light.vStart).MatrixProduct(m_pCamera->GetProjMat());
+		vEE.NoneHomogeneous();
+		vSS.NoneHomogeneous();
+		vSS.MatrixProduct(m_viewportMatrix);
+		vEE.MatrixProduct(m_viewportMatrix);
+		//m_vecPath.push_back(PW_Vertex(vSS, PW_RGB(255, 255, 255)));
+		//m_vecPath.push_back(PW_Vertex(vEE, PW_RGB(255, 255, 255)));
+
+	}
+
 
 	PW_BOOL bInsert = PW_FALSE;
 	dis = 10000000.f;
 	PW_LightRay r1, r2;
 	PW_INT nSele = -1;
 	PW_INT nRes = -1;
+	PW_INT nLastRes = -1;
 	PW_LightRay pwlight1,pwlight2;
 	for (int i = 0; i < m_pMeshs.size();i++)
 	{
-		nRes = m_pMeshs[i]->RayReflect(pNode->Light, r1, r2);
+		nRes = m_pMeshs[i]->RayReflect(pNode->Light, r1, r2/*, pNode->bDrawPath*/);
 		pNode->bInsert = PW_FALSE;
 		
 		if (nRes > 0)
@@ -1244,6 +1243,7 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 			nSele = i;
 			pwlight1 = r1;
 			pwlight2 = r2;
+			nLastRes = nRes;
 		}
 	}
 	if (bInsert)
@@ -1256,31 +1256,46 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 		pL->pRight = NULL;
 		pL->pLeft = NULL;
 		pL->Light = r1;
+		pL->bDrawPath = pNode->bDrawPath;
 		pNode->pLeft = pL;
 		nOutTotalD++;
 		PW_COLORF fT = RayComputerLight(pL);
 
 		PW_FLOAT fLen = 10000000.f;
 		PW_COLORF fL;
+		if (pNode->bDrawPath)
+		{
+			PW_Vector4D vSS = pNode->Light.vStart.MatrixProduct(m_pCamera->GetProjMat());
+			PW_Vector4D vEE = pL->Light.vStart.MatrixProduct(m_pCamera->GetProjMat());
+			vEE.NoneHomogeneous();
+			vSS.NoneHomogeneous();
+			vSS.MatrixProduct(m_viewportMatrix);
+			vEE.MatrixProduct(m_viewportMatrix);
+			m_vecPath.push_back(PW_Vertex(vSS, PW_RGB(255, 255, 255)));
+			m_vecPath.push_back(PW_Vertex(vEE, PW_RGB(255, 255, 255)));
+			//DrawLine2D(PW_Vertex(vSS, PW_RGB(255, 255, 255)), PW_Vertex(vEE, PW_RGB(255, 255,255)), 1, 0);
+		}
+
+
 		if (!m_pMeshs[nSele]->material.bEmissive)
 			fL = RayTraceRec(pL, nDepth + 1, nOutTotalD, fLen);
-		
-		PW_FLOAT fRate = (500.f /  (fLen * fLen));
-		if (fRate > 1.f)
-		{
-			fRate = 0.5f;
-		}
-		else
-		{
-			fRate *= 0.8f;
-		}
-		if (fRate < 1.f && fLen <10000000.f)
+
+		PW_FLOAT fRate = 0.8f;
+		//if (fRate > 1.f)
+		//{
+		//	fRate = 0.5f;
+		//}
+		//else
+		//{
+		//	fRate *= 0.8f;
+		//}
+		//if (fRate < 1.f && fLen <10000000.f)
 		{
 			fL = fL * fRate;
 		}
 
 		PW_COLORF fR;
-		if (nRes > 1 && !m_pMeshs[nSele]->material.bEmissive)
+		if (nLastRes > 1 && !m_pMeshs[nSele]->material.bEmissive)
 		{
 			PW_RayTraceNode* pR = &g_Node[m_nCurNodePos++];
 			//memset(pL, 0, sizeof(PW_RayTraceNode));
@@ -1288,24 +1303,37 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 			pR->pLeft = NULL;
 			pR->pRight = NULL;
 			pNode->pRight = pR;
-			
+			pR->bDrawPath = pNode->bDrawPath;
 			fR = RayTraceRec(pR, nDepth + 1, nOutTotalD, fLen);
-			fRate = (30.f / (pow(PW_FLOAT(nDepth + 1), 0)* (fLen + 1.f)));
-			if (fRate < 1.f)
+			fRate = 0.8f;//0.8g(30.f / (pow(PW_FLOAT(nDepth + 1), 0)* (fLen + 1.f)));
+			//if (fRate < 1.f)
 			{
 				//fL *= fRate;
 				fR = fR * fRate;
 			}
-
+			if (pNode->bDrawPath)
+			{
+				PW_Vector4D vSS = pNode->Light.vStart.MatrixProduct(m_pCamera->GetProjMat());
+				PW_Vector4D vEE = pR->Light.vStart.MatrixProduct(m_pCamera->GetProjMat());
+				vEE.NoneHomogeneous();
+				vSS.NoneHomogeneous();
+				vSS.MatrixProduct(m_viewportMatrix);
+				vEE.MatrixProduct(m_viewportMatrix);
+				m_vecPath.push_back(PW_Vertex(vSS, PW_RGB(255, 0, 0)));
+				m_vecPath.push_back(PW_Vertex(vEE, PW_RGB(255, 0, 0)));
+				//	DrawLine2D(PW_Vertex(vSS, PW_RGB(255, 255, 255)), PW_Vertex(vEE, PW_RGB(255, 255, 255)), 1, 0);
+			}
 		}
-		retColorf = retColorf + fL + fR + fT;
+		retColorf = retColorf + fL * pL->Light.cSpecularReflection/*m_pMeshs[nSele]->material.cSpecularReflection*/ + fR /** m_pMeshs[nSele]->material.cDiffuse*/ + fT;
 	}
-
+	else
+		return m_Ambient;
 	return retColorf;
 }
 
 void PW_3DDevice::RayTrace()
 {
+	m_vecPath.clear();
 	for (int i = 0; i < m_pMeshs.size();i++)
 	{
 		m_pMeshs[i]->ComputeCurVertex();
@@ -1345,16 +1373,28 @@ void PW_3DDevice::RayTrace()
 			Root->pLeft = NULL;
 			Root->pRight = NULL;
 			Root->Light.vStart = raystart;
-			Root->Light.vDir = rayend - raystart;
+			Root->Light.vDir = raystart;//rayend - raystart;
 			Root->Light.vDir.Normalize();
+			if (m_nDrawX == x && m_nDrawY == y)
+			{
+				Root->bDrawPath = PW_TRUE;
+			}
+			else
+			{
+				Root->bDrawPath = PW_FALSE;
+			}
 			nOutD = 0;
 			PW_COLORF fr = RayTraceRec(Root, 0, nOutD, flen);//RayComputerLight(Root);
-			if (nOutD > 0)
+			//if (nOutD > 0)
 			{
 				PW_COLOR pwc = fr * PW_COLOR(PW_RGB(255, 255, 255));
 
 				SetPixel(x, y, pwc);
 			}
 		}
+	}
+	for (int i = 0; i < m_vecPath.size();i += 2)
+	{
+		DrawLine2D(m_vecPath[i], m_vecPath[i + 1], 1, 0);
 	}
 }

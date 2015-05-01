@@ -20,6 +20,7 @@ void PW_AreaLight::SetMesh(PW_Mesh* pMesh)
 	{
 		pMesh->material.bEmissive = PW_TRUE;
 		pMesh->material.cEmission = m_cDiffuse;
+		m_vPosition = pMesh->GetPos();
 	}
 }
 
@@ -127,7 +128,7 @@ PW_COLORF PW_AreaLight::GetSpecular(PW_Vector3D* pvPos /* = NULL */)
 	}
 }
 
-PW_COLORF PW_AreaLight::RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_Vector3D& vNormal, PW_Vector3D& vOriDir)
+PW_COLORF PW_AreaLight::RayTraceColor(PW_Vector3D& vPos, PW_LightRay& lightRay, PW_INT nMeshIndex, PW_Vector3D& vNormal, PW_Vector3D& vOriDir)
 {
 	PW_Vector3D vDir;
 	vDir = vPos - this->m_vCurDir;
@@ -214,7 +215,7 @@ PW_COLORF PW_AreaLight::RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_V
 						PW_FLOAT fRes = PW_DotProduct(vDir, vNormal);
 						if (fRes > EPSILON)
 						{
-							fValue = fValue + m_cDiffuse * fRes * pMeshs[nMeshIndex]->material.cDiffuse;
+							fValue = fValue + m_cDiffuse * fRes * lightRay.cDiffuse;//pMeshs[nMeshIndex]->material.cDiffuse;
 
 						}
 
@@ -227,7 +228,7 @@ PW_COLORF PW_AreaLight::RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_V
 						fTmp = pow(fTmp, pMeshs[nMeshIndex]->material.fP);
 						if (fTmp > 0)
 						{
-							fValue = fValue + m_cSpecular * fTmp * pMeshs[nMeshIndex]->material.cSpecularReflection;
+							fValue = fValue + m_cSpecular * fTmp * lightRay.cSpecularReflection;//pMeshs[nMeshIndex]->material.cSpecularReflection;
 						}
 					}
 				}
@@ -237,5 +238,5 @@ PW_COLORF PW_AreaLight::RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_V
 		fR += fStep;
 	}
 
-	return fValue / m_nShadowRayCircleNum / m_nShadowRayNum + m_cAmbient* pMeshs[nMeshIndex]->material.cAmbient;
+	return fValue / m_nShadowRayCircleNum / m_nShadowRayNum + m_cAmbient* lightRay.cAmbient;//pMeshs[nMeshIndex]->material.cAmbient;
 }

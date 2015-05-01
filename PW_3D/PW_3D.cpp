@@ -294,6 +294,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		g_Mouse.bdown = true;
 		g_Mouse.x = LOWORD(lParam);
 		g_Mouse.y = HIWORD(lParam);
+		g_pPW3DDevice->SetDrawPath(g_Mouse.x, g_Mouse.y);
 		break;
 	case WM_LBUTTONUP:
 		g_Mouse.bdown = false;
@@ -387,10 +388,10 @@ void InitScene()
 		buffer1[7] = PW_POINT3D(0, 10, 10, PW_RGBA(123, 0, 0));
 
 		PW_POINT3D* groundbuffer = new PW_POINT3D[4];
-		groundbuffer[0] = PW_POINT3D(-100, -0, -200, PW_RGBA(255, 0, 0));
-		groundbuffer[1] = PW_POINT3D(-100, -0, 200, PW_RGBA(255, 0, 0));
-		groundbuffer[2] = PW_POINT3D(100, -0, 200, PW_RGBA(255, 0, 0));
-		groundbuffer[3] = PW_POINT3D(100, -0, -200, PW_RGBA(255, 0, 0));
+		groundbuffer[0] = PW_POINT3D(-100, -0, -400, PW_RGBA(255, 0, 0));
+		groundbuffer[1] = PW_POINT3D(-100, -0, 400, PW_RGBA(255, 0, 0));
+		groundbuffer[2] = PW_POINT3D(100, -0, 400, PW_RGBA(255, 0, 0));
+		groundbuffer[3] = PW_POINT3D(100, -0, -400, PW_RGBA(255, 0, 0));
 		PW_Triangle* indexbuffer = new PW_Triangle[12];
 		PW_Triangle* groundindexbuffer = new PW_Triangle[2];
 		int indexbbb[12][3] =
@@ -476,8 +477,8 @@ void InitScene()
 		g_PWMesh.SetBuffer(buffer, indexbuffer, 8, numface);
 		g_PWMesh2.SetBuffer(buffer1, indexbuffer, 8, numface);
 		g_PWMesh_Ground.SetBuffer(groundbuffer, groundindexbuffer, 4, 2);
-		g_sphereMesh.InitSphere(PW_Vector3D(0.f, 30.f, 20.f), 10.f);
-		g_sphereMesh1.InitSphere(PW_Vector3D(0.f, 60.f, 20.f), 10.f);
+		g_sphereMesh.InitSphere(PW_Vector3D(0.f, 15.f, 20.f), 10.f);
+		g_sphereMesh1.InitSphere(PW_Vector3D(8.f, 15.f, 40.f), 10.f);
 		PW_Material mater;
 		mater.fP = 15;
 		mater.fRef = 0.f;
@@ -495,22 +496,33 @@ void InitScene()
 		
 		
 		light.m_iLightType = pw_lt_directionallight;
-		light.m_vPosition = PW_Vector3D(0, 100, 0);
-		light.m_vDirection = PW_Vector3D(0, -1, 0);
+		light.m_vPosition = PW_Vector3D(0, 100, 20);
+		light.m_vDirection = PW_Vector3D(0, -1, 1);
 		light.m_cSpecular = PW_COLORF(1.f, 1.f, 1.f);
-		light.m_cAmbient = PW_COLORF(1.f, 1.f, 1.f);
+		light.m_cAmbient = PW_COLORF(0.f, 0.f, 0.f);
 		light.m_cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
+		g_pPW3DDevice->AddLight(&light);
 		light2 = light;
 		light2.m_iLightType = pw_lt_pointlight;
-		//g_pPW3DDevice->AddLight(&light);
+		
 		//g_pPW3DDevice->AddLight(&light2);
-		g_PWCamera.Init(PW_Vector3D(0, 70, -200), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
+		g_PWCamera.Init(PW_Vector3D(0, 30, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
 			PI / 4, 1.0f, 1.f, 1000.f);
 		g_pPW3DDevice->SetCamera(&g_PWCamera);
-		g_pPW3DDevice->SetAmbientColor(PW_COLORF(0.1, 0.1, 0.1));
+		g_pPW3DDevice->SetAmbientColor(PW_COLORF(0.3, 0.3, 0.3));
 		g_PWMesh.SetMaterial(mater);
-		g_sphereMesh.SetMaterial(mater);
+	
+
 		g_sphereMesh1.SetMaterial(mater);
+		mater.fRef = 1.49f;
+		PW_Material mtref = mater;
+		mtref.fTransparency = 0.9f;
+		mtref.cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
+		mtref.cSpecularReflection = PW_COLORF(0.03f, 0.03f, 0.03f);
+		g_sphereMesh.SetMaterial(mtref);
+		//mtref.fRef = 0.f;
+		//mtref.fTransparency = 0.f;
+		g_sphereMesh1.SetMaterial(mtref);
 		PW_Material mater0;
 		mater0.fP = 15.f;
 		mater0.fRef = 0.f;
@@ -526,8 +538,8 @@ void InitScene()
 		groundmaterial.fRef = 0.f;
 		g_PWMesh_Ground.SetMaterial(groundmaterial);
 		g_pPW3DDevice->SetRayTrace();
-		arealight.SetMesh(&g_sphereMesh1);
-		g_pPW3DDevice->AddLight(&arealight);
+		//arealight.SetMesh(&g_sphereMesh1);
+		//g_pPW3DDevice->AddLight(&arealight);
 	}
 }
 

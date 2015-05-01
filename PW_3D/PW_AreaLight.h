@@ -12,7 +12,7 @@ public:
 	virtual PW_Mesh* GetMesh(){ return m_pMesh; }
 	void GetShadowRays(PW_Vector3D& vPoint, PW_Vector3D* vStarts, PW_Vector3D* vDirs);
 
-	virtual PW_COLORF RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_Vector3D& vNormal, PW_Vector3D& vOriDir);
+	virtual PW_COLORF RayTraceColor(PW_Vector3D& vPos, PW_LightRay& lightRay, PW_INT nMeshIndex, PW_Vector3D& vNormal, PW_Vector3D& vOriDir);
 protected:
 	PW_Mesh* m_pMesh;
 	PW_INT m_nShadowRayNum;

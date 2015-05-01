@@ -45,7 +45,7 @@ public:
 
 	virtual PW_COLORF GetSpecular(PW_Vector3D* vPos );
 
-	virtual PW_COLORF RayTraceColor(PW_Vector3D& vPos, PW_INT nMeshIndex, PW_Vector3D& vNormal, PW_Vector3D& vOriDir);
+	virtual PW_COLORF RayTraceColor(PW_Vector3D& vPos, PW_LightRay& lightRay, PW_INT nMeshIndex ,PW_Vector3D& vNormal, PW_Vector3D& vOriDir);
 
 	virtual PW_Vector3D GetPos(){ return m_vPosition; }
 };

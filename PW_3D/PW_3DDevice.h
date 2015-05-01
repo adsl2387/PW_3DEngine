@@ -32,6 +32,10 @@ public:
 
 	void SetRayTrace(){ m_bRayTrace = true; }
 
+	void SetDrawPath(int x, int y){
+		m_nDrawX = x;
+		m_nDrawY = y;
+	}
 	void Update();
 	void DrawMesh(PW_Mesh& mesh);
 
@@ -39,13 +43,12 @@ public:
 
 	void DrawCircle(PW_FLOAT x, PW_FLOAT y, PW_FLOAT r, PW_COLOR pwColor = PW_RGB(255,255,255));
 
-	//void SetWorldTransform(PW_Matrix4D& m){ m_worldMatrix = m; }
-	//void SetViewTransform(PW_Matrix4D& m){ m_viewMatrix = m; }
-//	void SetProjTransform(PW_Matrix4D& m){ m_projMatrix = m; }
 	void SetViewPortTransform(PW_Matrix4D& m){ m_viewportMatrix = m; }
 
 	void SetHelpOutputInfo(PW_FLOAT fRotate){ m_fRotate = fRotate; }
+
 	void SetDrawStyle(){ m_ds = pw_dscount - m_ds; }
+
 	void ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat);
 
 	void AddLight(PW_Light* pLight);
@@ -94,7 +97,7 @@ public:
 	void SetCamera(PW_Camera* car){ m_pCamera = car; }
 
 	//根据顶点颜色插值画线
-	void DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
+	void DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1, PW_BOOL bEnableZ = PW_TRUE);
 
 	void DrawLine3D(PW_POINT3D point1, PW_POINT3D point2);
 
@@ -116,10 +119,6 @@ protected:
 	PW_COLORF RayComputerLight(PW_RayTraceNode* pNode);
 
 	void Clear(PW_COLOR pwcolor, PW_FLOAT pwzbuffer);
-	//void DrawPoint(PW_POINT point, PW_COLOR pwcolor);
-	//void DrawLine(PW_POINTF point1, PW_POINTF point2, PW_COLOR color, int isolid = 1);
-
-
 
 	//根据纹理
 	void DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
@@ -231,6 +230,11 @@ private:
 	bool m_bShowAll;
 	int m_bWrite;
 	//VE
+
+	//draw line
+	int m_nDrawX;
+	int m_nDrawY;
+	vector<PW_POINT3D> m_vecPath;
 };
 extern PW_3DDevice* g_pPW3DDevice;
 //#endif

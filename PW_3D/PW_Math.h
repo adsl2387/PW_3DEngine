@@ -10,7 +10,7 @@ typedef int PW_BOOL;
 #define PW_FALSE	0
 
 #define PI 3.1415926535898f
-#define EPSILON 0.000001f
+#define EPSILON 0.0001f
 #define ROUND(x) ((int)((x) + 0.5f))
 typedef DWORD PW_COLOR;
 

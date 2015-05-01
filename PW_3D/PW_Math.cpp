@@ -303,7 +303,7 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 			vRefDir2 = vT + vvTmp;
 			vRefDir2.Normalize();
 			vRefDir1 = PW_Vector3D(0.f);
-			//vRefDir2 = vDelta;
+			vRefDir2 = vDelta;
 		}
 	}
 
