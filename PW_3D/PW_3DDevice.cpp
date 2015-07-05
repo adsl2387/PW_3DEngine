@@ -11,7 +11,7 @@ PW_3DDevice::PW_3DDevice()
 	m_pZBuffer = NULL;
 	m_hWnd = NULL;
 	m_hBitmap = NULL;
-	m_ds = wireframe;
+	m_ds = solid;
 	m_bUseMaterial = false;
 	m_bUseLight = false;
 	m_bUseBiliner = false;
@@ -82,8 +82,8 @@ void PW_3DDevice::Clear(PW_COLOR pwcolor, PW_FLOAT pwzbuffer)
 	{
 		QuadMemSet(m_pZBuffer, m_iWidth * m_iHeight * sizeof(DWORD), tmp);
 	}
-	else
-		this->m_pMeshs.clear();
+	
+	this->m_pMeshs.clear();
 	
 	QuadMemSet(m_pBitBuffer, m_iWidth * m_iHeight * sizeof(DWORD), pwcolor);
 	m_fMaxZ = 0;
@@ -114,7 +114,21 @@ void PW_3DDevice::Present()
 	char buffer[200];
 	sprintf(buffer, "fps : %d, rotate angle :%.4f , use light: %d, use texture: %d, use material: %d, use bilinerfilter: %d"
 		, m_iFps, m_fRotate / 2.f / PI, m_bUseLight, m_bUseTexture ,m_bUseMaterial, m_bUseBiliner);
-	TextOut(hDc, 0, 0, buffer, strlen(buffer));
+	TextOut(hDc, 5, 0, buffer, strlen(buffer));
+
+	TextOut(hDc, 5, 20, "z : rorate", strlen("z : rorate"));
+
+	TextOut(hDc, 5, 40, "z : material", strlen("x : material"));
+
+	TextOut(hDc, 5, 60, "g : light", strlen("g : light"));
+
+	TextOut(hDc, 5, 80, "h : texture", strlen("h : texture"));
+
+	TextOut(hDc, 5, 100, "j : texture filter", strlen("j : texture filter"));
+
+	TextOut(hDc, 5, 120, "r : raytrace", strlen("r : raytrace"));
+
+	TextOut(hDc, 5, 140, "t : wireframe", strlen("t : wireframe"));
 	//DeleteObject(hMdc);
 	DeleteDC(hMdc);
 	ReleaseDC(m_hWnd, hDc);
@@ -152,16 +166,14 @@ void PW_3DDevice::Release()
 
 void PW_3DDevice::Render()
 {
-	
 	if (m_bRayTrace)
 	{
 		RayTrace();
 	}
-	//else
-	//{
-	Update();
-	//}
+	else
+		RenderScene();
 
+	Update();
 }
 
 void PW_3DDevice::Update()
@@ -390,17 +402,23 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 	PW_Matrix4D tran1;
 	PW_MatrixProduct4D(m_pCamera->GetViewMat(), mesh.m_matAbsTM, tran);
 
-	if (m_bRayTrace)
-	{
+	//if (m_bRayTrace)
+	//{
 		mesh.m_absoluteTM = tran;
 		m_pMeshs.push_back(&mesh);
-		return;
-	}
-	if (!m_v4dBuffer)
-	{
-		return;
-	}
-	PW_Vector3D pwOri;
+		//return;
+	//}
+	//else
+	//{
+		//if (!m_v4dBuffer)
+		//{
+		//	return;
+		//}
+		//RenderScene();
+	//}
+
+
+	/*PW_Vector3D pwOri;
 	pwOri = pwOri.MatrixProduct(tran);
 	for (int i = 0; i < mesh.pointcount;++i)
 	{
@@ -421,7 +439,7 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 			, PW_POINT3D(m_v4dBuffer[index2], mesh.buffer[index2].pwColor, m_vNormalsBuffer[index2], mesh.indexbuffer[i].u2, mesh.indexbuffer[i].v2)
 			, PW_POINT3D(m_v4dBuffer[index3], mesh.buffer[index3].pwColor, m_vNormalsBuffer[index3], mesh.indexbuffer[i].u3, mesh.indexbuffer[i].v3), PW_RGBA(255, 0, 0), m_ds);
 	
-	}
+	}*/
 }
 
 void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
@@ -438,23 +456,23 @@ void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
 		for (int i = 0; i < m_vLights.size();++i)
 		{
 			PW_FLOAT par = 1.0f;
-			PW_Vector3D lightdir;
-			if (m_vLights[i]->m_iLightType == pw_lt_spotlight)
+			PW_Vector3D lightdir = m_vLights[i]->m_vCurDir;
+			/*if (m_vLights[i]->m_iLightType == pw_lt_spotlight)
 			{
 			}
 			else if (m_vLights[i]->m_iLightType == pw_lt_pointlight)
 			{
-				PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(viewMat);
-				lightdir = vP - point;
+			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(viewMat);
+			lightdir = vP - point;
 			}
 			else
 			{
-				PW_Vector3D vOri;
-				vOri = vOri.MatrixProduct(viewMat);
-				PW_Vector3D vP = m_vLights[i]->m_vDirection.MatrixProduct(viewMat);
-				lightdir = vOri - vP;
+			PW_Vector3D vOri;
+			vOri = vOri.MatrixProduct(viewMat);
+			PW_Vector3D vP = m_vLights[i]->m_vDirection.MatrixProduct(viewMat);
+			lightdir = vOri - vP;
 			}
-			lightdir.Normalize();
+			lightdir.Normalize();*/
 			PW_FLOAT fRes = PW_DotProduct(lightdir, point.vNormal);
 			if (fRes > 0)
 			{
@@ -464,6 +482,7 @@ void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
 			PW_Vector3D vP = point * -1;
 			vP.Normalize();
 			vP = vP + lightdir;
+			vP.Normalize();
 			PW_FLOAT fTmp = PW_DotProduct(point.vNormal, vP);
 			fTmp = pow(fTmp, m_material.fP);
 			if (fTmp > 0)
@@ -555,25 +574,18 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	
 	if (ds == wireframe)
 	{
-		//if (dotRes > 0)
-		{
-			DrawLine2D(PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP)
-				, PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP));
-			DrawLine2D(PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP)
-				, PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP));
-			DrawLine2D(PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP)
-				, PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP));
-		}
+		DrawLine2D(PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP)
+			, PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP));
+		DrawLine2D(PW_POINT3D(p2, point2.pwColor, point2.vNormal, point2.u, point2.v, point2.fP)
+			, PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP));
+		DrawLine2D(PW_POINT3D(p3, point3.pwColor, point3.vNormal, point3.u, point3.v, point3.fP)
+			, PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP));
 	}
 	else
 	{
-		//if (dotRes > 0)
-		{
-			DrawTriangle(PW_POINT3D(p1, point1.pwColor, PW_Vector3D(), point1.u, point1.v, point1.fP)
-				, PW_POINT3D(p2, point2.pwColor, PW_Vector3D(), point2.u, point2.v, point2.fP)
-				, PW_POINT3D(p3, point3.pwColor, PW_Vector3D(), point3.u, point3.v, point3.fP));
-		}
-		
+		DrawTriangle(PW_POINT3D(p1, point1.pwColor, PW_Vector3D(), point1.u, point1.v, point1.fP)
+			, PW_POINT3D(p2, point2.pwColor, PW_Vector3D(), point2.u, point2.v, point2.fP)
+			, PW_POINT3D(p3, point3.pwColor, PW_Vector3D(), point3.u, point3.v, point3.fP));		
 	}
 	
 }
@@ -1331,6 +1343,38 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 	return retColorf;
 }
 
+void PW_3DDevice::RenderScene()
+{
+	UpdateCurLight();
+	for (int n = 0; n < m_pMeshs.size(); n++)
+	{
+		PW_Vector3D pwOri;
+		SetMaterial(&m_pMeshs[n]->material);
+		pwOri = pwOri.MatrixProduct(m_pMeshs[n]->m_absoluteTM);
+		for (int i = 0; i < m_pMeshs[n]->pointcount; ++i)
+		{
+			m_v4dBuffer[i] = m_pMeshs[n]->buffer[i].MatrixProduct(m_pMeshs[n]->m_absoluteTM);
+			m_vNormalsBuffer[i] = m_pMeshs[n]->buffer[i].vNormal.MatrixProduct(m_pMeshs[n]->m_absoluteTM);
+			m_v4dBuffer[i].pwColor = m_pMeshs[n]->buffer[i].pwColor;
+
+			m_vNormalsBuffer[i] = m_vNormalsBuffer[i] - pwOri;
+			m_vNormalsBuffer[i].Normalize();
+
+		}
+		for (int i = 0; i < m_pMeshs[n]->indexcount; i++)
+		{
+			int index1 = m_pMeshs[n]->indexbuffer[i][0];
+			int index2 = m_pMeshs[n]->indexbuffer[i][1];
+			int index3 = m_pMeshs[n]->indexbuffer[i][2];
+			DrawTriPrimitive(PW_POINT3D(m_v4dBuffer[index1], m_pMeshs[n]->buffer[index1].pwColor, m_vNormalsBuffer[index1], m_pMeshs[n]->indexbuffer[i].u1, m_pMeshs[n]->indexbuffer[i].v1)
+				, PW_POINT3D(m_v4dBuffer[index2], m_pMeshs[n]->buffer[index2].pwColor, m_vNormalsBuffer[index2], m_pMeshs[n]->indexbuffer[i].u2, m_pMeshs[n]->indexbuffer[i].v2)
+				, PW_POINT3D(m_v4dBuffer[index3], m_pMeshs[n]->buffer[index3].pwColor, m_vNormalsBuffer[index3], m_pMeshs[n]->indexbuffer[i].u3, m_pMeshs[n]->indexbuffer[i].v3), PW_RGBA(255, 0, 0), m_ds);
+
+		}
+	}
+
+}
+
 void PW_3DDevice::RayTrace()
 {
 	m_vecPath.clear();
@@ -1346,18 +1390,6 @@ void PW_3DDevice::RayTrace()
 	{
 		for (int y = 0; y < this->m_iHeight; y++)
 		{
-#ifdef AREATEST
-			if (x == 396 && y == 334)
-			{
-				gBFlag = PW_TRUE;
-			}
-			else
-			{
-				gBFlag = PW_FALSE;
-			}
-#endif // AREATEST
-
-			
 			m_nCurNodePos = 0;
 			raystart.x = x;
 			raystart.y = y;
@@ -1385,12 +1417,10 @@ void PW_3DDevice::RayTrace()
 			}
 			nOutD = 0;
 			PW_COLORF fr = RayTraceRec(Root, 0, nOutD, flen);//RayComputerLight(Root);
-			//if (nOutD > 0)
-			{
-				PW_COLOR pwc = fr * PW_COLOR(PW_RGB(255, 255, 255));
+		
+			PW_COLOR pwc = fr * PW_COLOR(PW_RGB(255, 255, 255));
 
-				SetPixel(x, y, pwc);
-			}
+			SetPixel(x, y, pwc);
 		}
 	}
 	for (int i = 0; i < m_vecPath.size();i += 2)

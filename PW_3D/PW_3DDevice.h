@@ -69,6 +69,8 @@ public:
 		
 	}
 
+	PW_BOOL IsRaytraceRender(){ return m_bRayTrace; }
+
 	void SwitchMaterial(){m_bUseMaterial = !m_bUseMaterial;}
 
 	void SwitchLight(){ m_bUseLight = !m_bUseLight; }
@@ -113,6 +115,8 @@ public:
 protected:
 
 	void RayTrace();
+
+	void RenderScene();
 
 	PW_COLORF RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT& nOutTotalD, PW_FLOAT& dis);
 
