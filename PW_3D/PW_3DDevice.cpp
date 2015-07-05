@@ -1353,6 +1353,10 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 
 void PW_3DDevice::RenderScene()
 {
+	if (!m_v4dBuffer)
+	{
+		return;
+	}
 	UpdateCurLight();
 
 	for (int n = 0; n < m_pMeshs.size(); n++)
