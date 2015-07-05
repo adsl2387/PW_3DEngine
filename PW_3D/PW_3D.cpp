@@ -485,7 +485,7 @@ void InitScene()
 		mater.cDiffuse = PW_COLORF(0.6f, 0.6f, 0.6f);
 		mater.cSpecularReflection = PW_COLORF(0.1f, 0.1f, 0.1f);
 
-		if (g_PWTexture.LoadBitmap("tietu3.bmp"))
+		if (g_PWTexture.LoadBitmap("tietu2.bmp"))
 		{
 			mater.pTexture = &g_PWTexture;
 		}
