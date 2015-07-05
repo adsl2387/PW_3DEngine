@@ -47,6 +47,8 @@ struct PW_POINT
 	{}
 };
 
+
+struct PW_Texture;
 struct PW_Material
 {
 	PW_COLORF cAmbient;
@@ -58,10 +60,13 @@ struct PW_Material
 	PW_FLOAT fRef;
 	PW_FLOAT fTransparency;//Í¸Ã÷¶È
 
+	PW_Texture* pTexture;
+
 	PW_Material() :
 		bEmissive(PW_FALSE),
 		fP(1.f),
-		fTransparency(0.f)
+		fTransparency(0.f),
+		pTexture(NULL)
 	{};
 };
 

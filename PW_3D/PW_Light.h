@@ -26,13 +26,14 @@ public:
 	PW_Vector3D m_vDirection;
 	PW_FLOAT m_fRange;
 	PW_Vector3D m_vCurDir;
+	PW_BOOL m_bOn;
 
 	PW_Light()
 	{
 		m_fAttenuation0 = 0;
 		m_fAttenuation1 = 0;
 		m_fAttenuation2 = 0;
-
+		m_bOn = PW_TRUE;
 	}
 	PW_Light(PW_FLOAT p1, PW_FLOAT p2, PW_FLOAT p3, PW_COLORF cDif, PW_COLORF cAmb, PW_COLORF cSpe, PW_INT lightType,
 		PW_Vector3D pos, PW_Vector3D dir, PW_FLOAT fRan)
@@ -48,4 +49,6 @@ public:
 	virtual PW_COLORF RayTraceColor(PW_Vector3D& vPos, PW_LightRay& lightRay, PW_INT nMeshIndex ,PW_Vector3D& vNormal, PW_Vector3D& vOriDir);
 
 	virtual PW_Vector3D GetPos(){ return m_vPosition; }
+
+	virtual void Switch(){ m_bOn = !m_bOn; }
 };

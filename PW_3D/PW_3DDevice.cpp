@@ -91,10 +91,11 @@ void PW_3DDevice::Clear(PW_COLOR pwcolor, PW_FLOAT pwzbuffer)
 	m_curV4DPos = 0;
 	m_curIndexPos = 0;
 	m_nCurNodePos = 0;
+	//m_vLights.clear();
 	//memset(g_Node, 0, sizeof(g_Node));
 }
 
-void PW_3DDevice::Present()
+void PW_3DDevice::OutputHelpInfo()
 {
 	HDC hDc = GetDC(m_hWnd);
 	HDC hMdc = CreateCompatibleDC(hDc);
@@ -129,6 +130,10 @@ void PW_3DDevice::Present()
 	TextOut(hDc, 5, 120, "r : raytrace", strlen("r : raytrace"));
 
 	TextOut(hDc, 5, 140, "t : wireframe", strlen("t : wireframe"));
+
+	TextOut(hDc, 5, 160, "b : direction light", strlen("b : direction light"));
+
+	TextOut(hDc, 5, 180, "n : point light", strlen("n : point light"));
 	//DeleteObject(hMdc);
 	DeleteDC(hMdc);
 	ReleaseDC(m_hWnd, hDc);
@@ -178,7 +183,7 @@ void PW_3DDevice::Render()
 
 void PW_3DDevice::Update()
 {
-	Present();
+	OutputHelpInfo();
 	Clear(PW_RGBA(127, 127, 127), 1.f);
 }
 
@@ -455,24 +460,25 @@ void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
 	{
 		for (int i = 0; i < m_vLights.size();++i)
 		{
+			if (!m_vLights[i]->m_bOn)
+			{
+				continue;
+			}
 			PW_FLOAT par = 1.0f;
 			PW_Vector3D lightdir = m_vLights[i]->m_vCurDir;
-			/*if (m_vLights[i]->m_iLightType == pw_lt_spotlight)
+			if (m_vLights[i]->m_iLightType == pw_lt_spotlight)
 			{
 			}
 			else if (m_vLights[i]->m_iLightType == pw_lt_pointlight)
 			{
-			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(viewMat);
-			lightdir = vP - point;
+				//PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(viewMat);
+				lightdir = lightdir - point;
 			}
 			else
 			{
-			PW_Vector3D vOri;
-			vOri = vOri.MatrixProduct(viewMat);
-			PW_Vector3D vP = m_vLights[i]->m_vDirection.MatrixProduct(viewMat);
-			lightdir = vOri - vP;
+
 			}
-			lightdir.Normalize();*/
+			lightdir.Normalize();
 			PW_FLOAT fRes = PW_DotProduct(lightdir, point.vNormal);
 			if (fRes > 0)
 			{
@@ -1130,6 +1136,8 @@ PW_COLORF PW_3DDevice::RayComputerLight(PW_RayTraceNode* pNode)
 #define RAYTRACELIGHT
 	for (int i = 0; i < m_vLights.size(); ++i)
 	{
+		if (!m_vLights[i]->m_bOn)
+			continue;
 #ifdef RAYTRACELIGHT
 		cRet += m_vLights[i]->RayTraceColor(pNode->Light.vStart, pNode->Light ,pNode->nMeshIndex, pNode->Light.vNormal, pNode->Light.vOriDir);
 #else
@@ -1346,11 +1354,13 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 void PW_3DDevice::RenderScene()
 {
 	UpdateCurLight();
+
 	for (int n = 0; n < m_pMeshs.size(); n++)
 	{
 		PW_Vector3D pwOri;
 		SetMaterial(&m_pMeshs[n]->material);
 		pwOri = pwOri.MatrixProduct(m_pMeshs[n]->m_absoluteTM);
+
 		for (int i = 0; i < m_pMeshs[n]->pointcount; ++i)
 		{
 			m_v4dBuffer[i] = m_pMeshs[n]->buffer[i].MatrixProduct(m_pMeshs[n]->m_absoluteTM);

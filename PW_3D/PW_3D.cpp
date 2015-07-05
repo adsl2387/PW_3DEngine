@@ -33,6 +33,9 @@ PW_Mesh g_PWMesh2;
 PW_Mesh g_PWMesh_Ground;
 PW_Camera g_PWCamera;
 PW_Texture g_PWTexture;
+PW_Texture g_PWTexture2;
+PW_Light g_PWDirecLight;
+PW_Light g_PWPointLight;
 
 
 struct MousePos
@@ -254,6 +257,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case 'e':
 			g_PWCamera.MoveUpOrDown(d);
 			break;
+		case 'b':
+			g_PWDirecLight.Switch();
+			break;
+		case 'n':
+			g_PWPointLight.Switch();
+			break;
 		//case 'r':
 		//	g_PWCamera.Pitch(dr);
 		//	break;
@@ -373,11 +382,6 @@ void InitScene()
 			PI / 4, 1.0f, 1.f, 1000.f);
 		g_pPW3DDevice->SetCamera(&g_PWCamera);
 
-		if (g_PWTexture.LoadBitmap("tietu3.bmp"))
-		{
-			g_pPW3DDevice->SetTexture(&g_PWTexture);
-		}
-
 		PW_POINT3D* buffer = new PW_POINT3D[8];
 		buffer[0] = PW_POINT3D(0, 0, 0, PW_RGBA(255, 0, 0));
 		buffer[1] = PW_POINT3D(40, 0, 0, PW_RGBA(0, 255, 0));
@@ -480,7 +484,18 @@ void InitScene()
 		mater.cAmbient = PW_COLORF(0.f, 0.f, 0.f, 0.f);
 		mater.cDiffuse = PW_COLORF(0.6f, 0.6f, 0.6f);
 		mater.cSpecularReflection = PW_COLORF(0.1f, 0.1f, 0.1f);
+
+		if (g_PWTexture.LoadBitmap("tietu3.bmp"))
+		{
+			mater.pTexture = &g_PWTexture;
+		}
 		g_PWMesh.SetMaterial(mater);
+
+		if (g_PWTexture2.LoadBitmap("tietu1.bmp"))
+		{
+			mater.pTexture = &g_PWTexture2;	
+		}
+
 		g_PWMesh2.SetMaterial(mater);
 		g_PWMesh.UseVertexNormal(PW_TRUE);
 		g_PWMesh2.UseVertexNormal(PW_TRUE);
@@ -521,7 +536,6 @@ void InitScene()
 
 
 		//light init
-		static PW_Light light, light2;
 		static PW_AreaLight arealight;
 		arealight.m_vPosition = PW_Vector3D(0.f, 60.f, 20.f);
 		arealight.m_vDirection = PW_Vector3D(0, -1, 0);
@@ -529,19 +543,19 @@ void InitScene()
 		arealight.m_cAmbient = PW_COLORF(0.1f, 0.1f, 0.1f);
 		arealight.m_cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
 		
-		light.m_iLightType = pw_lt_directionallight;
-		light.m_vPosition = PW_Vector3D(0, 100, 20);
-		light.m_vDirection = PW_Vector3D(0, -1, 1);
-		light.m_cSpecular = PW_COLORF(1.f, 1.f, 1.f);
-		light.m_cAmbient = PW_COLORF(0.f, 0.f, 0.f);
-		light.m_cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
-		g_pPW3DDevice->AddLight(&light);
-		light2 = light;
-		light2.m_iLightType = pw_lt_pointlight;
+		g_PWDirecLight.m_iLightType = pw_lt_directionallight;
+		g_PWDirecLight.m_vPosition = PW_Vector3D(0, 100, 20);
+		g_PWDirecLight.m_vDirection = PW_Vector3D(0, -1, 1);
+		g_PWDirecLight.m_cSpecular = PW_COLORF(1.f, 1.f, 1.f);
+		g_PWDirecLight.m_cAmbient = PW_COLORF(0.f, 0.f, 0.f);
+		g_PWDirecLight.m_cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
+		g_pPW3DDevice->AddLight(&g_PWDirecLight);
+		g_PWPointLight = g_PWDirecLight;
+		g_PWPointLight.m_iLightType = pw_lt_pointlight;
 		
-		//g_pPW3DDevice->AddLight(&light2);
+		g_pPW3DDevice->AddLight(&g_PWPointLight);
 	
-		g_pPW3DDevice->SetAmbientColor(PW_COLORF(0.3, 0.3, 0.3));
+		g_pPW3DDevice->SetAmbientColor(PW_COLORF(0., 0.2, 0.3));
 
 	}
 }

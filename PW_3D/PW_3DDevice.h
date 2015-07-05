@@ -65,6 +65,7 @@ public:
 		{
 			m_material = *material;
 			m_bUseMaterial = true;
+			SetTexture(m_material.pTexture);
 		}
 		
 	}
@@ -128,7 +129,7 @@ protected:
 	void DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
 	void DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3, PW_COLOR color, int ds = wireframe);
 	void DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3);
-	void Present();
+	void OutputHelpInfo();
 
 
 	
