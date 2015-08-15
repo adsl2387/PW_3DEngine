@@ -105,6 +105,7 @@
     <ClInclude Include="PW_3DDevice.h" />
     <ClInclude Include="PW_Camera.h" />
     <ClInclude Include="PW_AreaLight.h" />
+    <ClInclude Include="PW_define.h" />
     <ClInclude Include="PW_Light.h" />
     <ClInclude Include="PW_Math.h" />
     <ClInclude Include="PW_Obj.h" />

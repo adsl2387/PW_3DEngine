@@ -18,6 +18,8 @@ PW_3DDevice::PW_3DDevice()
 	m_bRayTrace = false;
 	m_nDrawX = -1;
 	m_nDrawY = -1;
+	fnVertexShader = NULL;
+	fnPixelShader = NULL;
 }
 
 PW_3DDevice::~PW_3DDevice()
@@ -211,13 +213,13 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 	{
 		if (GetValueOfZBuffer(ROUND(point1.x), ROUND(point1.y)) - point1.z> 0)
 		{
-			PW_COLOR pwColor;
-			if (m_bUseBiliner)
+			PW_COLOR pwColor = fnPixelShader(point1);
+			/*if (m_bUseBiliner)
 			{
 				pwColor = point1.fP * m_texture->BiLinerGetColor(point1.u, point1.v);
 			}
 			else
-				pwColor = point1.fP * m_texture->GetColor(point1.u, point1.v);
+				pwColor = point1.fP * m_texture->GetColor(point1.u, point1.v);*/
 			SetValueOfCBuffer(ROUND(point1.x), ROUND(point1.y), pwColor);
 			SetValueOfZBuffer(ROUND(point1.x), ROUND(point1.y), point1.z);
 		}	
@@ -286,12 +288,18 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 			PW_FLOAT fdz = 1.f / fz;
 			fsu = fU1 * fdz;
 			fsv = fV1 * fdz;
-			if (m_bUseBiliner)
-			{
-				pwColor = fLp1 * fdz * m_texture->BiLinerGetColor(fsu, fsv);
-			}
-			else
-				pwColor = fLp1 * fdz * m_texture->GetColor(fsu, fsv);
+			PW_POINT3D in;
+			in.fP = fLp1 * fdz;
+			in.u = fsu;
+			in.v = fsv;
+			in.z = fsz;
+			pwColor = fnPixelShader(in);
+			//if (m_bUseBiliner)
+			//{
+			//	pwColor = fLp1 * fdz * m_texture->BiLinerGetColor(fsu, fsv);
+			//}
+			//else
+			//	pwColor = fLp1 * fdz * m_texture->GetColor(fsu, fsv);
 		
 			SetValueOfCBuffer(ROUND(fx), ROUND(fy), pwColor);
 			SetValueOfZBuffer(ROUND(fx), ROUND(fy), fsz);
@@ -331,11 +339,11 @@ void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid, P
 	{
 		if (!bEnableZ || m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] - point1.z> 0)
 		{
-			PW_COLOR pwColor = point1.pwColor;
-			if (m_bUseTexture)
-			{
-				pwColor = point1.fP * m_texture->GetColor(point1.u, point1.v);
-			}
+			PW_COLOR pwColor = fnPixelShader(point1);
+			//if (m_bUseTexture)
+			//{
+			//	pwColor = point1.fP * m_texture->GetColor(point1.u, point1.v);
+			//}
 			m_pBitBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = pwColor;
 			m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = point1.z;
 
@@ -415,36 +423,9 @@ void PW_3DDevice::DrawMesh(PW_Mesh& mesh)
 	//}
 	//else
 	//{
-		//if (!m_v4dBuffer)
-		//{
-		//	return;
-		//}
-		//RenderScene();
+	//	mesh.m_absoluteTM = mesh.m_matAbsTM;
+	//	m_pMeshs.push_back(&mesh);
 	//}
-
-
-	/*PW_Vector3D pwOri;
-	pwOri = pwOri.MatrixProduct(tran);
-	for (int i = 0; i < mesh.pointcount;++i)
-	{
-		m_v4dBuffer[i] = mesh.buffer[i].MatrixProduct(tran);
-		m_vNormalsBuffer[i] = mesh.buffer[i].vNormal.MatrixProduct(tran);
-		m_v4dBuffer[i].pwColor = mesh.buffer[i].pwColor;
-
-		m_vNormalsBuffer[i] = m_vNormalsBuffer[i] - pwOri;
-		m_vNormalsBuffer[i].Normalize();
-		
-	}
-	for (int i = 0; i < mesh.indexcount;i++)
-	{
-		int index1 = mesh.indexbuffer[i][0];
-		int index2 = mesh.indexbuffer[i][1];
-		int index3 = mesh.indexbuffer[i][2];
-		DrawTriPrimitive(PW_POINT3D(m_v4dBuffer[index1], mesh.buffer[index1].pwColor, m_vNormalsBuffer[index1], mesh.indexbuffer[i].u1, mesh.indexbuffer[i].v1)
-			, PW_POINT3D(m_v4dBuffer[index2], mesh.buffer[index2].pwColor, m_vNormalsBuffer[index2], mesh.indexbuffer[i].u2, mesh.indexbuffer[i].v2)
-			, PW_POINT3D(m_v4dBuffer[index3], mesh.buffer[index3].pwColor, m_vNormalsBuffer[index3], mesh.indexbuffer[i].u3, mesh.indexbuffer[i].v3), PW_RGBA(255, 0, 0), m_ds);
-	
-	}*/
 }
 
 void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
@@ -544,6 +525,39 @@ void PW_3DDevice::ComputeLight(PW_POINT3D& point, PW_Matrix4D& viewMat)
 	point.pwColor = pwRet;
 }
 
+PW_Vector4D VertexShader(PW_POINT3D& in)
+{
+	PW_Vector4D p1;
+	PW_Matrix4D tan, projMatrix;
+	projMatrix = g_pPW3DDevice->GetCamera()->GetProjMat();// this->m_pCamera->GetProjMat();
+	//PW_MatrixProduct4D(projMatrix, g_pPW3DDevice->GetCamera()->GetViewMat(), tan);
+	p1 = in.MatrixProduct(projMatrix);
+	p1.NoneHomogeneous();
+	g_pPW3DDevice->ComputeLight(in, g_pPW3DDevice->GetCamera()->GetViewMat());
+
+	//in.vNormal = in.vNormal.MatrixProduct(tan, PW_FALSE);
+	//in.vNormal.Normalize();
+
+	return p1;
+}
+
+PW_COLOR PixelShader(PW_POINT3D& in)
+{
+	PW_COLOR pwColor;
+	PW_Texture* pTexture = g_pPW3DDevice->GetTexture();
+	if (!pTexture)
+	{
+		return in.pwColor;
+	}
+	if (g_pPW3DDevice->UseBilinerTex())
+	{
+		pwColor = in.fP * pTexture->BiLinerGetColor(in.u, in.v);
+	}
+	else
+		pwColor = in.fP * pTexture->GetColor(in.u, in.v);
+	return pwColor;
+}
+
 //观察坐标系中的点
 void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3, PW_COLOR color, int ds)
 {
@@ -560,24 +574,30 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	{
 		return;
 	}
+	//PW_Vector4D p1, p2, p3;
+	//PW_Matrix4D tan, projMatrix;
+	//projMatrix = this->m_pCamera->GetProjMat();
+	//p1 = point1.MatrixProduct(projMatrix);
+	//p2 = point2.MatrixProduct(projMatrix);
+	//p3 = point3.MatrixProduct(projMatrix);
+	//p1.NoneHomogeneous();
+	//p2.NoneHomogeneous();
+	//p3.NoneHomogeneous();
+	//p1.MatrixProduct(m_viewportMatrix);
+	//p2.MatrixProduct(m_viewportMatrix);
+	//p3.MatrixProduct(m_viewportMatrix);
+	//
+	////计算光强
+	//ComputeLight(point1, m_pCamera->GetViewMat());
+	//ComputeLight(point2, m_pCamera->GetViewMat());
+	//ComputeLight(point3, m_pCamera->GetViewMat());
 	PW_Vector4D p1, p2, p3;
-	PW_Matrix4D tan, projMatrix;
-	projMatrix = this->m_pCamera->GetProjMat();
-	p1 = point1.MatrixProduct(projMatrix);
-	p2 = point2.MatrixProduct(projMatrix);
-	p3 = point3.MatrixProduct(projMatrix);
-	p1.NoneHomogeneous();
-	p2.NoneHomogeneous();
-	p3.NoneHomogeneous();
+	p1 = fnVertexShader(point1);
+	p2 = fnVertexShader(point2);
+	p3 = fnVertexShader(point3);
 	p1.MatrixProduct(m_viewportMatrix);
 	p2.MatrixProduct(m_viewportMatrix);
 	p3.MatrixProduct(m_viewportMatrix);
-	
-	//计算光强
-	ComputeLight(point1, m_pCamera->GetViewMat());
-	ComputeLight(point2, m_pCamera->GetViewMat());
-	ComputeLight(point3, m_pCamera->GetViewMat());
-	
 	if (ds == wireframe)
 	{
 		DrawLine2D(PW_POINT3D(p1, point1.pwColor, point1.vNormal, point1.u, point1.v, point1.fP)
@@ -1358,6 +1378,9 @@ void PW_3DDevice::RenderScene()
 		return;
 	}
 	UpdateCurLight();
+
+	fnPixelShader = PixelShader;
+	fnVertexShader = VertexShader;
 
 	for (int n = 0; n < m_pMeshs.size(); n++)
 	{

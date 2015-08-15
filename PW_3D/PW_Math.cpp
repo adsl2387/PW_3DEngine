@@ -132,11 +132,20 @@ void PW_ViewPortMatrix(PW_Matrix4D& m, PW_FLOAT fWidth, PW_FLOAT fHeight)
 	m[3][3] = 1;
 }
 
-PW_Vector4D PW_Vector3D::MatrixProduct(PW_Matrix4D& mat)
+PW_Vector4D PW_Vector3D::MatrixProduct(PW_Matrix4D& mat, PW_BOOL bEnableTrans)
 {
-	PW_Vector4D v4d(*this);
-	v4d.MatrixProduct(mat);
-	return v4d;
+	if (bEnableTrans)
+	{
+		PW_Vector4D v4d(*this);
+		v4d.MatrixProduct(mat);
+		return v4d;
+	}
+	else
+	{
+		PW_Vector4D v4d(*this, 0.f);
+		v4d.MatrixProduct(mat);
+		return v4d;
+	}
 }
 
 PW_Vector3D::PW_Vector3D(PW_Vector4D& v4d)

@@ -5,6 +5,7 @@
 #include <Windows.h>
 #include <vector>
 #include "PW_Camera.h"
+#include "PW_define.h"
 
 #include "PW_Obj.h"
 #include "PW_Light.h"
@@ -17,6 +18,11 @@ enum PW_DS
 };
 
 extern PW_BOOL gBFlag ;
+
+
+PW_Vector4D VertexShader(PW_POINT3D& in);
+
+PW_COLOR PixelShader(PW_POINT3D& in);
 
 class PW_3DDevice
 {
@@ -109,11 +115,31 @@ public:
 	PW_Matrix4D GetViewportMatrix(){ return m_viewportMatrix; }
 
 	PW_Vector4D GetOriPos(PW_FLOAT x, PW_FLOAT y, PW_FLOAT z);
+
+	DWORD* GetColorBuffer(){ return m_pBitBuffer; }
+
+	void SetColorBuffer(DWORD* pBuffer){ m_pBitBuffer = pBuffer; }
+
+	PW_FLOAT* GetZBuffer(){ return m_pZBuffer; }
+
+	void SetZBuffer(PW_FLOAT* pBuffer){ m_pZBuffer = pBuffer; }
+
+	DWORD GetRenderState(){ return m_dwRenderState; }
+
+	DWORD SetRenderState(DWORD dwValue){ m_dwRenderState = dwValue; }
+
+	PW_Texture* GetTexture(){ return m_texture; }
+
+	PW_BOOL UseBilinerTex(){ return m_bUseBiliner; }
+
 	PW_3DDevice();
 	~PW_3DDevice();
 	PW_FLOAT m_fWidth;
 	PW_FLOAT m_fHeight;
 protected:
+
+	PW_Vector4D (*fnVertexShader)(PW_POINT3D& in);
+	PW_COLOR (*fnPixelShader)(PW_POINT3D& in);
 
 	void RayTrace();
 
@@ -240,6 +266,8 @@ private:
 	int m_nDrawX;
 	int m_nDrawY;
 	vector<PW_POINT3D> m_vecPath;
+
+	DWORD m_dwRenderState;
 };
 extern PW_3DDevice* g_pPW3DDevice;
 //#endif

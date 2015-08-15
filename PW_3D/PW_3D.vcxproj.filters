@@ -77,6 +77,9 @@
     <ClInclude Include="PW_AreaLight.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PW_define.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="PW_3D.ico">

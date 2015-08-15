@@ -158,6 +158,8 @@ public:
 	PW_BOOL bHasMaterial;
 	PW_AABB curAABB;
 	PW_BOOL bUseVertexNormal;
+	PW_BOOL bCastShadow;
+	PW_BOOL bReceiveShadow;
 	
 
 	PW_Mesh() :buffer(NULL), indexbuffer(NULL), pointcount(0), indexcount(0), bHasMaterial(PW_FALSE), pNowBuffer(NULL), bUseVertexNormal(PW_FALSE)

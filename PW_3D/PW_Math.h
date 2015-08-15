@@ -146,7 +146,7 @@ struct PW_Vector3D
 	//	z = v4d.z / v4d.w;
 	//}
 
-	PW_Vector4D MatrixProduct(PW_Matrix4D& mat);
+	PW_Vector4D MatrixProduct(PW_Matrix4D& mat, PW_BOOL bEnableTrans = PW_TRUE);
 
 	inline PW_FLOAT GetLen()
 	{
