@@ -326,7 +326,9 @@ void PW_RotateByLineMatrix(PW_Matrix4D& m, PW_Line& line);
 
 void PW_ViewMatrix(PW_Matrix4D& m, PW_Vector3D& vViewPoint, PW_Vector3D& vLookAt, PW_Vector3D& vUp);
 
-void PW_ProjMatrix(PW_Matrix4D& m, PW_FLOAT fAngle, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar);
+void PW_PersProjMatrix(PW_Matrix4D& m, PW_FLOAT fAngle, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar);
+
+void PW_OrthoProjMatrix(PW_Matrix4D& m, PW_FLOAT fExtend, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar);
 
 void PW_ViewPortMatrix(PW_Matrix4D& m, PW_FLOAT fWidth, PW_FLOAT fHeight);
 

@@ -31,7 +31,7 @@ PW_SphereMesh g_sphereMesh2;
 PW_SphereMesh g_sphereMesh3;
 PW_Mesh g_PWMesh2;
 PW_Mesh g_PWMesh_Ground;
-PW_Camera g_PWCamera;
+PW_PerspectiveCamera g_PWCamera;
 PW_Texture g_PWTexture;
 PW_Texture g_PWTexture2;
 PW_Light g_PWDirecLight;
@@ -378,7 +378,7 @@ void InitScene()
 {
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
-		g_PWCamera.Init(PW_Vector3D(0, 30, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
+		g_PWCamera.SetCamerInfo(PW_Vector3D(0, 30, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
 			PI / 4, 1.0f, 1.f, 1000.f);
 		g_pPW3DDevice->SetCamera(&g_PWCamera);
 

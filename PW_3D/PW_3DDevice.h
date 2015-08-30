@@ -84,6 +84,8 @@ public:
 
 	void SwitchTexture(){ m_bUseTexture = !m_bUseTexture; }
 
+	void RenderShadowMap();
+
 	void SetTexture(PW_Texture* text)
 	{
 		if (!text)
@@ -103,14 +105,14 @@ public:
 
 	void EnableLight(bool bUse){m_bUseLight = bUse;}
 	void SwitchTextFilter(){ m_bUseBiliner = !m_bUseBiliner; }
-	void SetCamera(PW_Camera* car){ m_pCamera = car; }
+	void SetCamera(PW_PerspectiveCamera* car){ m_pCamera = car; }
 
 	//根据顶点颜色插值画线
 	void DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1, PW_BOOL bEnableZ = PW_TRUE);
 
 	void DrawLine3D(PW_POINT3D point1, PW_POINT3D point2);
 
-	PW_Camera* GetCamera(){ return m_pCamera; }
+	PW_PerspectiveCamera* GetCamera(){ return m_pCamera; }
 
 	PW_Matrix4D GetViewportMatrix(){ return m_viewportMatrix; }
 
@@ -139,6 +141,7 @@ public:
 protected:
 
 	PW_Vector4D (*fnVertexShader)(PW_POINT3D& in);
+
 	PW_COLOR (*fnPixelShader)(PW_POINT3D& in);
 
 	void RayTrace();
@@ -214,7 +217,7 @@ protected:
 		this->m_pBitBuffer[y * m_iWidth + x] = pwColor;
 	}
 private:
-	PW_Camera* m_pCamera;
+	PW_PerspectiveCamera* m_pCamera;
 	int m_nCurNodePos;
 	HWND m_hWnd;
 	int m_iWidth;
@@ -223,6 +226,9 @@ private:
 	HBITMAP m_hBitmap;
 	DWORD* m_pBitBuffer;
 	PW_FLOAT* m_pZBuffer;
+
+	PW_FLOAT* m_pShadowZBuffer;
+
 	HWND m_hEdit;
 	DWORD m_lastTick;
 	DWORD m_iFps;
@@ -268,6 +274,7 @@ private:
 	vector<PW_POINT3D> m_vecPath;
 
 	DWORD m_dwRenderState;
+	PW_OrthoCamera* m_pShadowMapCamera;
 };
 extern PW_3DDevice* g_pPW3DDevice;
 //#endif

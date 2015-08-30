@@ -103,7 +103,17 @@ void PW_ViewMatrix(PW_Matrix4D& m, PW_Vector3D& vViewPoint, PW_Vector3D& vLookAt
 	m[3][3] = 1;
 }
 
-void PW_ProjMatrix(PW_Matrix4D& m, PW_FLOAT fAngle, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar)
+void PW_OrthoProjMatrix(PW_Matrix4D& m, PW_FLOAT fExtend, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar)
+{
+	m.Zero();
+	m[0][0] = fRate / fExtend;
+	m[1][1] = 1.f / fExtend;
+	m[2][2] = 1.f / (fFar - fNear);
+	m[2][3] = fNear / (fNear - fFar);
+	m[3][3] = 1.f;
+}
+
+void PW_PersProjMatrix(PW_Matrix4D& m, PW_FLOAT fAngle, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar)
 {
 	m.Zero();
 	PW_FLOAT sx, sy;
