@@ -36,7 +36,8 @@ struct PW_Vertex:public PW_Vector3D
 	}
 };
 
-typedef PW_Vertex PW_POINT3D;
+#define PW_POINT3D PW_Vertex
+//typedef PW_Vertex PW_POINT3D;
 
 struct PW_POINT
 {
@@ -230,6 +231,8 @@ public:
 		pointcount = 0;
 		indexcount = 0;
 	}
+
+	PW_AABB GetAABB(){ return curAABB; }
 };
 
 struct PW_Texture

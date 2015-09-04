@@ -21,9 +21,7 @@ PW_3DDevice::PW_3DDevice()
 	m_nDrawY = -1;
 	fnVertexShader = NULL;
 	fnPixelShader = NULL;
-
-	m_pShadowMapCamera = new PW_OrthoCamera;
-
+	m_pShadowMapCamera = NULL;
 }
 
 PW_3DDevice::~PW_3DDevice()
@@ -76,6 +74,7 @@ bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 	m_bShow = 0;
 	m_curIndexPos = 0;
 	m_curV4DPos = 0;
+	m_pShadowMapCamera = new PW_OrthoCamera;
 	return true;
 }
 
@@ -184,6 +183,7 @@ void PW_3DDevice::Release()
 	if (m_pShadowMapCamera)
 	{
 		delete m_pShadowMapCamera;
+		m_pShadowMapCamera = NULL;
 	}
 }
 
@@ -550,14 +550,31 @@ PW_Vector4D VertexShader(PW_POINT3D& in)
 	PW_Vector4D p1;
 	PW_Matrix4D tan, projMatrix;
 	projMatrix = g_pPW3DDevice->GetCamera()->GetProjMat();// this->m_pCamera->GetProjMat();
-	PW_MatrixProduct4D(projMatrix, g_pPW3DDevice->GetCamera()->GetViewMat(), tan);
-	p1 = in.MatrixProduct(tan);
+	//PW_MatrixProduct4D(projMatrix, g_pPW3DDevice->GetCamera()->GetViewMat(), tan);
+	p1 = in.MatrixProduct(g_pPW3DDevice->GetCamera()->GetViewMat());
+	//p1.NoneHomogeneous();
+	p1.MatrixProduct(projMatrix);
 	p1.NoneHomogeneous();
-	
 
 	in.vNormal = in.vNormal.MatrixProduct(g_pPW3DDevice->GetCamera()->GetViewMat(), PW_FALSE);
 	in.vNormal.Normalize();
 	g_pPW3DDevice->ComputeLight(in, g_pPW3DDevice->GetCamera()->GetViewMat());
+	return p1;
+}
+
+PW_Vector4D ShadowMapVS(PW_POINT3D& in)
+{
+	PW_Vector4D p1;
+	PW_Matrix4D tan, projMatrix;
+	projMatrix = g_pPW3DDevice->GetShadowMapCamera()->GetProjMat();// this->m_pCamera->GetProjMat();
+	PW_MatrixProduct4D(projMatrix, g_pPW3DDevice->GetCamera()->GetViewMat(), tan);
+	p1 = in.MatrixProduct(tan);
+	p1.NoneHomogeneous();
+
+
+	//in.vNormal = in.vNormal.MatrixProduct(g_pPW3DDevice->GetCamera()->GetViewMat(), PW_FALSE);
+	//in.vNormal.Normalize();
+	//g_pPW3DDevice->ComputeLight(in, g_pPW3DDevice->GetCamera()->GetViewMat());
 	return p1;
 }
 
@@ -578,6 +595,59 @@ PW_COLOR PixelShader(PW_POINT3D& in)
 	return pwColor;
 }
 
+PW_COLOR ShadowMapPS(PW_POINT3D& in)
+{
+	return 0xffffffff;
+}
+
+PW_Vector4D ReceiveShodowVS(PW_POINT3D& in)
+{
+	PW_Vector4D p1;
+	PW_Matrix4D tan, projMatrix;
+	projMatrix = g_pPW3DDevice->GetCamera()->GetProjMat();// this->m_pCamera->GetProjMat();
+	PW_MatrixProduct4D(projMatrix, g_pPW3DDevice->GetCamera()->GetViewMat(), tan);
+	p1 = in.MatrixProduct(tan);
+	p1.NoneHomogeneous();
+
+
+	in.vNormal = in.vNormal.MatrixProduct(g_pPW3DDevice->GetCamera()->GetViewMat(), PW_FALSE);
+	in.vNormal.Normalize();
+	g_pPW3DDevice->ComputeLight(in, g_pPW3DDevice->GetCamera()->GetViewMat());
+	return p1;
+}
+
+PW_COLOR ReceiveShadowPS(PW_POINT3D& in)
+{
+	PW_COLOR pwColor;
+	PW_Texture* pTexture = g_pPW3DDevice->GetTexture();
+	PW_Vector3D vViewPos;
+	g_pPW3DDevice->GetViewPos(in, vViewPos);
+	PW_Vector4D vWorldPos = vViewPos.MatrixProduct(g_pPW3DDevice->GetCamera()->GetInverseViewMat());
+	vWorldPos.MatrixProduct(g_pPW3DDevice->GetShadowMapCamera()->GetViewMat());
+	vWorldPos.MatrixProduct(g_pPW3DDevice->GetShadowMapCamera()->GetProjMat());
+	
+	PW_FLOAT fShadowZ = g_pPW3DDevice->GetValueOfShadowZBuffer(ROUND(vWorldPos.x), ROUND(vWorldPos.y));
+
+	PW_COLORF fShadowValue = PW_COLORF(1.f, 1.f, 1.f, 1.f);
+
+	if (fShadowZ < vWorldPos.z)
+	{
+		fShadowValue = fShadowValue * 0.5f;
+	}
+
+	if (!pTexture)
+	{
+		return  fShadowValue * in.pwColor;
+	}
+	if (g_pPW3DDevice->UseBilinerTex())
+	{
+		pwColor = in.fP * fShadowValue * pTexture->BiLinerGetColor(in.u, in.v);
+	}
+	else
+		pwColor = in.fP * fShadowValue * pTexture->GetColor(in.u, in.v);
+	return pwColor;
+}
+
 //观察坐标系中的点
 void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3, PW_COLOR color, int ds)
 {
@@ -589,7 +659,15 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	PW_Vector3D v = pView2 - pView1;
 	PW_Vector3D u = pView3 - pView2;
 	PW_Vector3D dir(0, 0, 0);
-	dir = dir - pView1;
+	if (m_pCamera->IsOrthoCamera())
+	{
+		dir = PW_Vector3D(0.f, 0.f, -1.f);
+	}
+	else
+	{
+		dir = dir - pView1;
+	}
+	
 	PW_Vector3D h;
 	PW_CrossProduct(v, u, h);
 	PW_FLOAT dotRes = PW_DotProduct(h, dir);
@@ -604,7 +682,7 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	p1 = fnVertexShader(point1);
 	p2 = fnVertexShader(point2);
 	p3 = fnVertexShader(point3);
-	p1.MatrixProduct(m_viewportMatrix);
+ 	p1.MatrixProduct(m_viewportMatrix);
 	p2.MatrixProduct(m_viewportMatrix);
 	p3.MatrixProduct(m_viewportMatrix);
 	PW_BOOL bEnableZTest = m_dwRenderState & PW_RS_ENABLEZTEST;
@@ -629,6 +707,7 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3)
 {
 	PW_BOOL bEnableZTest = m_dwRenderState & PW_RS_ENABLEZTEST;
+	PW_BOOL bPerspectiveCorrect = !m_pCamera->IsOrthoCamera();
 	PW_POINT3D pps[3];
 	pps[0] = point1;
 	if (point2.y < pps[0].y)
@@ -655,6 +734,12 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 	PW_FLOAT fZ1 = GetViewZ(pps[1].z);
 	PW_FLOAT fZ2 = GetViewZ(pps[2].z);
 
+	PW_FLOAT fInterZ1 = bPerspectiveCorrect ? 1.f / fZ1 : fZ1;
+	PW_FLOAT fInterZ2 = bPerspectiveCorrect ? 1.f / fZ2 : fZ2;
+	PW_FLOAT fInterZ = bPerspectiveCorrect ? 1.f / fZ : fZ;
+	PW_FLOAT fRatioZ1 = bPerspectiveCorrect ? fInterZ1 : 1;
+	PW_FLOAT fRatioZ2 = bPerspectiveCorrect ? fInterZ2 : 1;
+	PW_FLOAT fRatioZ = bPerspectiveCorrect ? fInterZ : 1;
 	int cury = ROUND(pps[0].y);
 	PW_POINT3D leftPoint, rightPoint;
 	PW_FLOAT fZl,fZr;
@@ -662,8 +747,8 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 	{
 		PW_FLOAT fIncrementx1 =(pps[1].x - pps[0].x) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementx2 = (pps[2].x - pps[0].x) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementz1 = (1.0f / fZ1 - 1.0f / fZ) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementz2 = (1.0f /fZ2 - 1.0f / fZ) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementz1 = (fInterZ1 - fInterZ) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementz2 = (fInterZ2 - fInterZ) / PW_FLOAT(dy2);
 		PW_FLOAT fIncrementr1 = ((PW_FLOAT)PW_RGBA_R(pps[1].pwColor) / fZ1 - (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementg1 = ((PW_FLOAT)PW_RGBA_G(pps[1].pwColor) / fZ1- (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementb1 = ((PW_FLOAT)PW_RGBA_B(pps[1].pwColor) / fZ1- (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
@@ -672,10 +757,10 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		PW_FLOAT fIncrementb2 = ((PW_FLOAT)PW_RGBA_B(pps[2].pwColor) / fZ2- (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) / fZ) / PW_FLOAT(dy2);
 		PW_COLORF fIncrementlp1 = (pps[1].fP / fZ1 - pps[0].fP / fZ) / PW_FLOAT(dy1);
 		PW_COLORF fIncrementlp2 = (pps[2].fP / fZ2 - pps[0].fP / fZ) / PW_FLOAT(dy2);
-		PW_FLOAT fDu1 = (pps[1].u / fZ1 - pps[0].u / fZ) / PW_FLOAT(dy1);
-		PW_FLOAT fDu2 = (pps[2].u / fZ2 - pps[0].u / fZ) / PW_FLOAT(dy2);
-		PW_FLOAT fDv1 = (pps[1].v / fZ1 - pps[0].v / fZ) / PW_FLOAT(dy1);
-		PW_FLOAT fDv2 = (pps[2].v / fZ2 - pps[0].v / fZ) / PW_FLOAT(dy2);
+		PW_FLOAT fDu1 = (pps[1].u * fRatioZ1 - pps[0].u * fRatioZ) / PW_FLOAT(dy1);
+		PW_FLOAT fDu2 = (pps[2].u * fRatioZ2 - pps[0].u * fRatioZ) / PW_FLOAT(dy2);
+		PW_FLOAT fDv1 = (pps[1].v * fRatioZ1 - pps[0].v * fRatioZ) / PW_FLOAT(dy1);
+		PW_FLOAT fDv2 = (pps[2].v * fRatioZ2 - pps[0].v * fRatioZ) / PW_FLOAT(dy2);
 		if (fIncrementx1 > fIncrementx2)
 		{
 			PW_FLOAT fTmp;
@@ -692,8 +777,8 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		}
 		PW_FLOAT fXl = (pps[0].x);
 		PW_FLOAT fXr = (pps[0].x);
-		fZl = 1.f / fZ;
-		fZr = 1.f / fZ;
+		fZl = fInterZ;
+		fZr = fInterZ;
 		
 		PW_FLOAT fR1 = (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) / fZ;
 		PW_FLOAT fG1 = (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) / fZ;
@@ -703,10 +788,10 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		PW_FLOAT fB2 = (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) / fZ;
 		PW_COLORF fLp1 = pps[0].fP / fZ;
 		PW_COLORF fLp2 = pps[0].fP / fZ;
-		PW_FLOAT fU1 = pps[0].u / fZ;
-		PW_FLOAT fV1 = pps[0].v / fZ;
-		PW_FLOAT fU2 = pps[0].u / fZ;
-		PW_FLOAT fV2 = pps[0].v / fZ;
+		PW_FLOAT fU1 = pps[0].u * fRatioZ;
+		PW_FLOAT fV1 = pps[0].v * fRatioZ;
+		PW_FLOAT fU2 = pps[0].u * fRatioZ;
+		PW_FLOAT fV2 = pps[0].v * fRatioZ;
 		int curY = ROUND(pps[0].y);
 
 		if (m_bUseTexture)
@@ -741,23 +826,23 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 			{
 				leftPoint.x = fXl;
 				leftPoint.y = curY;
-				leftPoint.z = GetViewPortZ(1.f / fZl);
+				leftPoint.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZl) : GetViewPortZ(fZl);
 				leftPoint.fP = fLp1 / fZl;
-				leftPoint.u = fU1 / fZl;
-				leftPoint.v = fV1 / fZl;
+				leftPoint.u = bPerspectiveCorrect ? fU1 / fZl : fU1;
+				leftPoint.v = bPerspectiveCorrect ? fV1 / fZl : fV1;
 				leftPoint.pwColor = PW_RGBA(ROUND(fR1 / fZl), ROUND(fG1 / fZl), ROUND(fB1 / fZl));
 				rightPoint.x = fXr;
 				rightPoint.y = curY;
 				rightPoint.pwColor = PW_RGBA(ROUND(fR2 / fZr), ROUND(fG2 / fZr), ROUND(fB2 / fZr));
-				rightPoint.z = GetViewPortZ(1.f / fZr);
+				rightPoint.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZr) : GetViewPortZ(fZr);
 				rightPoint.fP = fLp2 / fZr;
-				rightPoint.u = fU2 / fZr;
-				rightPoint.v = fV2 / fZr;
+				rightPoint.u = bPerspectiveCorrect ? fU2 / fZr : fU2;
+				rightPoint.v = bPerspectiveCorrect ? fV2 / fZr : fV2;
 			}
 			PW_POINT3D p1, p2;
 			p1.x = fXl;
 			p1.y = curY;
-			p1.z = GetViewPortZ(1.f / fZl);
+			p1.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZl) : GetViewPortZ( fZl);
 			p1.fP = fLp1 / fZl;
 			p1.u = fU1 / fZl;
 			p1.v = fV1 / fZl;
@@ -1130,6 +1215,7 @@ void PW_3DDevice::UpdateCurLight()
 		}
 		else
 		{
+			RenderShadowMap(m_vLights[i]);
 			PW_Vector3D vOri;
 			vOri = vOri.MatrixProduct(m_pCamera->GetViewMat());
 			PW_Vector3D vP = m_vLights[i]->m_vDirection.MatrixProduct(m_pCamera->GetViewMat());
@@ -1381,9 +1467,97 @@ PW_COLORF PW_3DDevice::RayTraceRec(PW_RayTraceNode* pNode, PW_INT nDepth, PW_INT
 	return retColorf;
 }
 
-void PW_3DDevice::RenderShadowMap()
+void PW_3DDevice::RenderShadowMap(PW_Light* pLight)
 {
+	if (!pLight)
+	{
+		return;
+	}
+	fnPixelShader = ShadowMapPS;
+	fnVertexShader = ShadowMapVS;
+	m_dwRenderState = PW_RS_ENABLEZWRITE | PW_RS_ENABLEZTEST;
+	PW_FLOAT* pOldBuffer = GetZBuffer();
+	SetZBuffer(m_pShadowZBuffer);
+
+	PW_Vector3D vMin(10000.f, 10000.f, 10000.f);
+	PW_Vector3D vMax(-10000.f, -10000.f, -10000.f);
 	
+
+	for (int n = 0; n < m_pMeshs.size(); n++)
+	{
+		if (m_pMeshs[n]->bCastShadow)
+		{
+			PW_Vector3D pwOri;
+			SetMaterial(&m_pMeshs[n]->material);
+			pwOri = pwOri.MatrixProduct(m_pMeshs[n]->m_absoluteTM);
+
+			for (int i = 0; i < m_pMeshs[n]->pointcount; ++i)
+			{
+				m_v4dBuffer[i] = m_pMeshs[n]->buffer[i].MatrixProduct(m_pMeshs[n]->m_absoluteTM);
+
+				vMin.x = fmin(m_v4dBuffer[i].x, vMin.x);
+				vMin.y = fmin(m_v4dBuffer[i].y, vMin.y);
+				vMin.z = fmin(m_v4dBuffer[i].z, vMin.z);
+
+				vMax.x = fmax(m_v4dBuffer[i].x, vMax.x);
+				vMax.y = fmax(m_v4dBuffer[i].y, vMax.y);
+				vMax.z = fmax(m_v4dBuffer[i].z, vMax.z);
+			}
+			//for (int i = 0; i < m_pMeshs[n]->indexcount; i++)
+			//{
+			//	int index1 = m_pMeshs[n]->indexbuffer[i][0];
+			//	int index2 = m_pMeshs[n]->indexbuffer[i][1];
+			//	int index3 = m_pMeshs[n]->indexbuffer[i][2];
+			//	DrawTriPrimitive(PW_POINT3D(m_v4dBuffer[index1], m_pMeshs[n]->buffer[index1].pwColor, m_vNormalsBuffer[index1], m_pMeshs[n]->indexbuffer[i].u1, m_pMeshs[n]->indexbuffer[i].v1)
+			//		, PW_POINT3D(m_v4dBuffer[index2], m_pMeshs[n]->buffer[index2].pwColor, m_vNormalsBuffer[index2], m_pMeshs[n]->indexbuffer[i].u2, m_pMeshs[n]->indexbuffer[i].v2)
+			//		, PW_POINT3D(m_v4dBuffer[index3], m_pMeshs[n]->buffer[index3].pwColor, m_vNormalsBuffer[index3], m_pMeshs[n]->indexbuffer[i].u3, m_pMeshs[n]->indexbuffer[i].v3), PW_RGBA(255, 0, 0), m_ds);
+
+			//}
+		}
+		
+	}
+	PW_Vector3D vLookAt;
+	vLookAt.x = (vMin.x + vMax.x) / 2.f;
+	vLookAt.y = (vMin.x + vMax.y) / 2.f;
+	vLookAt.z = (vMin.z + vMax.z) / 2.f;
+	PW_Vector3D vLen = vMax - vMin;
+	PW_FLOAT fExtend = vLen.GetLen() / 2.f;
+
+	PW_Vector3D vDir = pLight->m_vDirection;
+	vDir.Normalize();
+
+	PW_Vector3D vPos = vLookAt - vDir * (fExtend + 5.f);
+
+	PW_Vector3D vUp = vDir + PW_Vector3D(vDir.x + 1, vDir.y * 2 + 2, vDir.z * 3 + 3);
+
+	m_pShadowMapCamera->SetCamerInfo(vPos, vLookAt, vUp, fExtend, 1.f, 1.f, 10000.f);
+
+	for (int n = 0; n < m_pMeshs.size(); n++)
+	{
+		if (m_pMeshs[n]->bCastShadow)
+		{
+			PW_Vector3D pwOri;
+			SetMaterial(&m_pMeshs[n]->material);
+			pwOri = pwOri.MatrixProduct(m_pMeshs[n]->m_absoluteTM);
+
+			for (int i = 0; i < m_pMeshs[n]->pointcount; ++i)
+			{
+				m_v4dBuffer[i] = m_pMeshs[n]->buffer[i].MatrixProduct(m_pMeshs[n]->m_absoluteTM);
+			}
+			for (int i = 0; i < m_pMeshs[n]->indexcount; i++)
+			{
+				int index1 = m_pMeshs[n]->indexbuffer[i][0];
+				int index2 = m_pMeshs[n]->indexbuffer[i][1];
+				int index3 = m_pMeshs[n]->indexbuffer[i][2];
+				DrawTriPrimitive(PW_POINT3D(m_v4dBuffer[index1], m_pMeshs[n]->buffer[index1].pwColor, m_vNormalsBuffer[index1], m_pMeshs[n]->indexbuffer[i].u1, m_pMeshs[n]->indexbuffer[i].v1)
+					, PW_POINT3D(m_v4dBuffer[index2], m_pMeshs[n]->buffer[index2].pwColor, m_vNormalsBuffer[index2], m_pMeshs[n]->indexbuffer[i].u2, m_pMeshs[n]->indexbuffer[i].v2)
+					, PW_POINT3D(m_v4dBuffer[index3], m_pMeshs[n]->buffer[index3].pwColor, m_vNormalsBuffer[index3], m_pMeshs[n]->indexbuffer[i].u3, m_pMeshs[n]->indexbuffer[i].v3), PW_RGBA(255, 0, 0), m_ds);
+
+			}
+		}
+
+	}
+	SetZBuffer(pOldBuffer);
 }
 
 void PW_3DDevice::RenderScene()
@@ -1394,11 +1568,17 @@ void PW_3DDevice::RenderScene()
 	}
 	UpdateCurLight();
 
-	fnPixelShader = PixelShader;
-	fnVertexShader = VertexShader;
 
+	fnVertexShader = VertexShader;
+	m_dwRenderState = PW_RS_ENABLEZWRITE | PW_RS_ENABLEZTEST | PW_RS_ENABLECOLORWRITE;
 	for (int n = 0; n < m_pMeshs.size(); n++)
 	{
+		if (m_pMeshs[n]->bReceiveShadow)
+		{
+			fnPixelShader = ReceiveShadowPS;
+		}
+		else
+			fnPixelShader = PixelShader;
 		PW_Vector3D pwOri;
 		SetMaterial(&m_pMeshs[n]->material);
 		pwOri = pwOri.MatrixProduct(m_pMeshs[n]->m_absoluteTM);

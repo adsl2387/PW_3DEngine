@@ -31,7 +31,7 @@ PW_SphereMesh g_sphereMesh2;
 PW_SphereMesh g_sphereMesh3;
 PW_Mesh g_PWMesh2;
 PW_Mesh g_PWMesh_Ground;
-PW_PerspectiveCamera g_PWCamera;
+PW_CameraBase* g_pPWCamera;
 PW_Texture g_PWTexture;
 PW_Texture g_PWTexture2;
 PW_Light g_PWDirecLight;
@@ -240,22 +240,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wParam)
 		{
 		case 'w':
-			g_PWCamera.MoveDirect(d);
+			g_pPWCamera->MoveDirect(d);
 			break;
 		case 's':
-			g_PWCamera.MoveDirect(-d);
+			g_pPWCamera->MoveDirect(-d);
 			break;
 		case 'a':
-			g_PWCamera.MoveLeftOrRight(d);
+			g_pPWCamera->MoveLeftOrRight(d);
 			break;
 		case 'd':
-			g_PWCamera.MoveLeftOrRight(-d);
+			g_pPWCamera->MoveLeftOrRight(-d);
 			break;
 		case 'q':
-			g_PWCamera.MoveUpOrDown(-d);
+			g_pPWCamera->MoveUpOrDown(-d);
 			break;
 		case 'e':
-			g_PWCamera.MoveUpOrDown(d);
+			g_pPWCamera->MoveUpOrDown(d);
 			break;
 		case 'b':
 			g_PWDirecLight.Switch();
@@ -323,8 +323,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			newx = LOWORD(lParam);
 			newy = HIWORD(lParam);
-			g_PWCamera.Yaw(PW_FLOAT(newx - g_Mouse.x) / -1000.f);
-			g_PWCamera.Pitch(PW_FLOAT(newy - g_Mouse.y) / -1000.f);
+			g_pPWCamera->Yaw(PW_FLOAT(newx - g_Mouse.x) / -1000.f);
+			g_pPWCamera->Pitch(PW_FLOAT(newy - g_Mouse.y) / -1000.f);
 			g_Mouse.x = newx;
 			g_Mouse.y = newy;
 		}
@@ -378,9 +378,14 @@ void InitScene()
 {
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
-		g_PWCamera.SetCamerInfo(PW_Vector3D(0, 30, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
+		//g_pPWCamera = new PW_OrthoCamera;
+		//g_pPWCamera->SetCamerInfo(PW_Vector3D(0, 30, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
+		//	50, 1.0f, 1.f, 1000.f);
+
+		g_pPWCamera = new PW_PerspectiveCamera;
+		g_pPWCamera->SetCamerInfo(PW_Vector3D(0, 30, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
 			PI / 4, 1.0f, 1.f, 1000.f);
-		g_pPW3DDevice->SetCamera(&g_PWCamera);
+		g_pPW3DDevice->SetCamera(g_pPWCamera);
 
 		PW_POINT3D* buffer = new PW_POINT3D[8];
 		buffer[0] = PW_POINT3D(0, 0, 0, PW_RGBA(255, 0, 0));
@@ -499,7 +504,12 @@ void InitScene()
 		g_PWMesh2.SetMaterial(mater);
 		g_PWMesh.UseVertexNormal(PW_TRUE);
 		g_PWMesh2.UseVertexNormal(PW_TRUE);
+		g_PWMesh2.bCastShadow = PW_TRUE;
+		g_PWMesh2.bReceiveShadow = PW_TRUE;
+		g_PWMesh.bCastShadow = PW_TRUE;
+		g_PWMesh.bReceiveShadow = PW_TRUE;
 
+		g_PWMesh_Ground.bReceiveShadow = PW_TRUE;
 		//ray trace init
 
 		mater.cAmbient = PW_COLORF(0.f, 0.f, 0.f, 0.f);
@@ -580,6 +590,13 @@ void RenderScene(UINT uTime)
 
 	if (!g_pPW3DDevice->IsRaytraceRender())
 	{
+		PW_Matrix4D identymatrix;
+		identymatrix.IdentityMatrix();
+		PW_TranslationMatrix(identymatrix, -20, -50, -500);
+		//g_PW3DDevice.SetWorldTransform(identymatrix);
+		g_PWMesh_Ground.SetAbsTM(identymatrix);
+		g_pPW3DDevice->DrawMesh(g_PWMesh_Ground);
+
 		//mesh 1
 		PW_RotateByXMatrix(rotatemat, PI / 6.0f);
 

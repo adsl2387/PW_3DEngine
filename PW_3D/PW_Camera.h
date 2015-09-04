@@ -31,12 +31,23 @@ public:
 
 	PW_Matrix4D GetProjMat(){ return m_projMat; }
 
+	PW_Matrix4D GetInverseViewMat(){ return m_inverseViewMat; }
+
+
+	PW_BOOL IsOrthoCamera(){ return m_bOrtho; }
+
+	virtual PW_FLOAT GetViewPortZ(PW_FLOAT fViewZ) = 0;
+
+	virtual PW_FLOAT GetViewZ(PW_FLOAT fScreenZ) = 0;
 protected:
 	PW_Matrix4D m_viewMat;
 	PW_Vector3D m_vPos;
 	PW_Vector3D m_vUp;
 	PW_Vector3D m_vLookAt;
 	PW_Matrix4D m_projMat;
+
+	PW_Matrix4D m_inverseViewMat;
+	PW_BOOL		m_bOrtho;
 };
 
 class PW_PerspectiveCamera:public PW_CameraBase
@@ -47,7 +58,9 @@ public:
 
 	virtual void SetCamerInfo(PW_Vector3D vPos, PW_Vector3D vLookAt ,PW_Vector3D vUp, PW_FLOAT fFOV, PW_FLOAT fRate, PW_FLOAT fNear, PW_FLOAT fFar);
 
+	virtual PW_FLOAT GetViewZ(PW_FLOAT fScreenZ);
 
+	virtual PW_FLOAT GetViewPortZ(PW_FLOAT fViewZ);
 
 };
 
@@ -63,6 +76,10 @@ public:
 	//«∞∫Û“∆∂Ø
 	virtual void MoveDirect(PW_FLOAT d);
 
+	virtual PW_FLOAT GetViewZ(PW_FLOAT fScreenZ);
+
+	virtual PW_FLOAT GetViewPortZ(PW_FLOAT fViewZ);
 protected:
 	PW_FLOAT m_fScale;
+	PW_Matrix4D m_matBaseProj;
 };
