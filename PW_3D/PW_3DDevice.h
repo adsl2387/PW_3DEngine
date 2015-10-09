@@ -84,7 +84,13 @@ public:
 		
 	}
 
-	inline PW_FLOAT GetValueOfShadowZBuffer(PW_INT x, PW_INT y){ return m_pShadowZBuffer[y * m_iWidth + x]; }
+	inline PW_FLOAT GetValueOfShadowZBuffer(PW_INT x, PW_INT y)
+	{
+		if (x < 0 || x >= m_iWidth || y < 0 || y >= m_iHeight)
+			return 99999.f;
+		return m_pShadowZBuffer[y * m_iWidth + x]; }
+
+	inline void ViewPortClamp(PW_Vector4D& p1);
 
 	PW_BOOL IsRaytraceRender(){ return m_bRayTrace; }
 
@@ -123,6 +129,8 @@ public:
 	void DrawLine3D(PW_POINT3D point1, PW_POINT3D point2);
 
 	PW_CameraBase* GetCamera(){ return m_pCamera; }
+
+	PW_INT GetViewPortHeight(){ return m_iHeight; }
 
 	PW_CameraBase* GetShadowMapCamera(){ return m_pShadowMapCamera; }
 
@@ -186,11 +194,15 @@ protected:
 	void DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isolid = 1);
 	void DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3, PW_COLOR color, int ds = wireframe);
 	void DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3);
+	void DrawTriangle(PW_Vector4D point1, PW_Vector4D point2, PW_Vector4D point3);
+
 	void OutputHelpInfo();
 
 
 	
-	inline PW_FLOAT GetValueOfZBuffer(PW_INT x, PW_INT y){ return m_pZBuffer[y * m_iWidth + x]; }
+	inline PW_FLOAT GetValueOfZBuffer(PW_INT x, PW_INT y){ 
+		return m_pZBuffer[y * m_iWidth + x];
+	}
 
 
 	inline void SetValueOfZBuffer(PW_INT x, PW_INT y, PW_FLOAT v){ m_pZBuffer[y * m_iWidth + x] = v; }
@@ -292,7 +304,8 @@ private:
 	vector<PW_POINT3D> m_vecPath;
 
 	DWORD m_dwRenderState;
-	PW_OrthoCamera* m_pShadowMapCamera;
+	PW_CameraBase* m_pShadowMapCamera;
+
 };
 extern PW_3DDevice* g_pPW3DDevice;
 //#endif

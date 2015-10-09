@@ -379,11 +379,11 @@ void InitScene()
 	if (g_PWMesh.GetVertexCount() == 0)
 	{
 		//g_pPWCamera = new PW_OrthoCamera;
-		//g_pPWCamera->SetCamerInfo(PW_Vector3D(0, 30, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
+		//g_pPWCamera->SetCamerInfo(PW_Vector3D(0, 100, 20), PW_Vector3D(0, 99, 21), PW_Vector3D(0, 1, 0),
 		//	50, 1.0f, 1.f, 1000.f);
 
 		g_pPWCamera = new PW_PerspectiveCamera;
-		g_pPWCamera->SetCamerInfo(PW_Vector3D(0, 30, -100), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
+		g_pPWCamera->SetCamerInfo(PW_Vector3D(0, 30, -200), PW_Vector3D(0, 0, 0), PW_Vector3D(0, 1, 0),
 			PI / 4, 1.0f, 1.f, 1000.f);
 		g_pPW3DDevice->SetCamera(g_pPWCamera);
 
@@ -408,10 +408,10 @@ void InitScene()
 		buffer1[7] = PW_POINT3D(0, 10, 10, PW_RGBA(123, 0, 0));
 
 		PW_POINT3D* groundbuffer = new PW_POINT3D[4];
-		groundbuffer[0] = PW_POINT3D(-100, -0, -400, PW_RGBA(255, 0, 0));
+		groundbuffer[0] = PW_POINT3D(-100, -0, -50, PW_RGBA(255, 0, 0));
 		groundbuffer[1] = PW_POINT3D(-100, -0, 400, PW_RGBA(255, 0, 0));
 		groundbuffer[2] = PW_POINT3D(100, -0, 400, PW_RGBA(255, 0, 0));
-		groundbuffer[3] = PW_POINT3D(100, -0, -400, PW_RGBA(255, 0, 0));
+		groundbuffer[3] = PW_POINT3D(100, -0, -50, PW_RGBA(255, 0, 0));
 		PW_Triangle* indexbuffer = new PW_Triangle[12];
 		PW_Triangle* groundindexbuffer = new PW_Triangle[2];
 		int indexbbb[12][3] =
@@ -505,11 +505,12 @@ void InitScene()
 		g_PWMesh.UseVertexNormal(PW_TRUE);
 		g_PWMesh2.UseVertexNormal(PW_TRUE);
 		g_PWMesh2.bCastShadow = PW_TRUE;
-		g_PWMesh2.bReceiveShadow = PW_TRUE;
+		g_PWMesh2.bReceiveShadow = PW_FALSE;
 		g_PWMesh.bCastShadow = PW_TRUE;
-		g_PWMesh.bReceiveShadow = PW_TRUE;
+		g_PWMesh.bReceiveShadow = PW_FALSE;
 
 		g_PWMesh_Ground.bReceiveShadow = PW_TRUE;
+	//	g_PWMesh_Ground.bCastShadow = PW_TRUE;
 		//ray trace init
 
 		mater.cAmbient = PW_COLORF(0.f, 0.f, 0.f, 0.f);
@@ -554,12 +555,12 @@ void InitScene()
 		arealight.m_cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
 		
 		g_PWDirecLight.m_iLightType = pw_lt_directionallight;
-		g_PWDirecLight.m_vPosition = PW_Vector3D(0, 100, 20);
-		g_PWDirecLight.m_vDirection = PW_Vector3D(0, -1, 1);
+		g_PWDirecLight.m_vPosition = PW_Vector3D(0, 100, 0);
+		g_PWDirecLight.m_vDirection = PW_Vector3D(0, -1, 0);
 		g_PWDirecLight.m_cSpecular = PW_COLORF(1.f, 1.f, 1.f);
 		g_PWDirecLight.m_cAmbient = PW_COLORF(0.f, 0.f, 0.f);
 		g_PWDirecLight.m_cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
-		g_pPW3DDevice->AddLight(&g_PWDirecLight);
+		//g_pPW3DDevice->AddLight(&g_PWDirecLight);
 		g_PWPointLight = g_PWDirecLight;
 		g_PWPointLight.m_iLightType = pw_lt_pointlight;
 		
@@ -592,7 +593,7 @@ void RenderScene(UINT uTime)
 	{
 		PW_Matrix4D identymatrix;
 		identymatrix.IdentityMatrix();
-		PW_TranslationMatrix(identymatrix, -20, -50, -500);
+		PW_TranslationMatrix(identymatrix, -20, -50, 0);
 		//g_PW3DDevice.SetWorldTransform(identymatrix);
 		g_PWMesh_Ground.SetAbsTM(identymatrix);
 		g_pPW3DDevice->DrawMesh(g_PWMesh_Ground);

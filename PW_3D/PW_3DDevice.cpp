@@ -74,7 +74,8 @@ bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 	m_bShow = 0;
 	m_curIndexPos = 0;
 	m_curV4DPos = 0;
-	m_pShadowMapCamera = new PW_OrthoCamera;
+	//m_pShadowMapCamera = new PW_OrthoCamera;
+	m_pShadowMapCamera = new PW_PerspectiveCamera;
 	return true;
 }
 
@@ -211,13 +212,19 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 	{
 		return;
 	}
+	PW_BOOL bPerCorrect = !m_pCamera->IsOrthoCamera();
+	PW_BOOL bEnableZTest = m_dwRenderState & PW_RS_ENABLEZTEST;
+	PW_BOOL bEnableZWrite = m_dwRenderState & PW_RS_ENABLEZWRITE;
+	PW_BOOL bEnableColorWrite = m_dwRenderState & PW_RS_ENABLECOLORWRITE;
 	m_bShow++;
 
 	int dx = ROUND(point2.x) - ROUND(point1.x);
 	int dy = ROUND(point2.y) - ROUND(point1.y);
-	PW_FLOAT fvz1 = 1.f / GetViewZ(point1.z);
-	PW_FLOAT fvz2 = 1.f / GetViewZ(point2.z);
+	PW_FLOAT fvz1 = bPerCorrect ? 1.f / GetViewZ(point1.z) :point1.z;
+	PW_FLOAT fvz2 = bPerCorrect ? 1.f / GetViewZ(point2.z) :point2.z;
 	PW_FLOAT dz = fvz2 - fvz1;
+	PW_FLOAT fRatio1 = bPerCorrect ? fvz1 : 1;
+	PW_FLOAT fRatio2 = bPerCorrect ? fvz2 : 1;
 	int steps;
 	if (abs(dx) > abs(dy))
 	{
@@ -227,7 +234,7 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 		steps = abs(dy);
 	if (!(ROUND(point1.y) < 0 || ROUND(point1.y) >= m_iHeight || ROUND(point1.x) < 0 || ROUND(point1.x) >= m_iWidth))
 	{
-		if (GetValueOfZBuffer(ROUND(point1.x), ROUND(point1.y)) - point1.z> 0)
+		if (GetValueOfZBuffer(ROUND(point1.x), ROUND(point1.y)) - point1.z> 0 || !bEnableZTest)
 		{
 			PW_COLOR pwColor = fnPixelShader(point1);
 			/*if (m_bUseBiliner)
@@ -236,8 +243,10 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 			}
 			else
 				pwColor = point1.fP * m_texture->GetColor(point1.u, point1.v);*/
-			SetValueOfCBuffer(ROUND(point1.x), ROUND(point1.y), pwColor);
-			SetValueOfZBuffer(ROUND(point1.x), ROUND(point1.y), point1.z);
+			if (bEnableColorWrite)
+				SetValueOfCBuffer(ROUND(point1.x), ROUND(point1.y), pwColor);
+			if (bEnableZWrite)
+				SetValueOfZBuffer(ROUND(point1.x), ROUND(point1.y), point1.z);
 		}	
 	}
 	if (steps == 0)
@@ -247,20 +256,20 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 	PW_FLOAT fIncrementx = dx / (PW_FLOAT)steps;
 	PW_FLOAT fIncrementy = dy / (PW_FLOAT)steps;
 	PW_FLOAT fIncrementz = dz / steps;
-	PW_COLORF fIncrementlp1 = (point2.fP * fvz2 - point1.fP * fvz1) / PW_FLOAT(steps);
+	PW_COLORF fIncrementlp1 = (point2.fP * fRatio2 - point1.fP * fRatio1) / PW_FLOAT(steps);
 
-	PW_FLOAT fIncrementu1 = (point2.u * fvz2 - point1.u * fvz1) / PW_FLOAT(steps);
-	PW_FLOAT fIncrementv1 = (point2.v * fvz2 - point1.v * fvz1) / PW_FLOAT(steps);
+	PW_FLOAT fIncrementu1 = (point2.u * fRatio2 - point1.u * fRatio1) / PW_FLOAT(steps);
+	PW_FLOAT fIncrementv1 = (point2.v * fRatio2 - point1.v * fRatio1) / PW_FLOAT(steps);
 
 
 	PW_FLOAT fx = point1.x;
 	PW_FLOAT fy = point1.y;
 	PW_FLOAT fz =  fvz1;
 
-	PW_COLORF fLp1 = point1.fP * fvz1;
+	PW_COLORF fLp1 = point1.fP * fRatio1;
 
-	PW_FLOAT fU1 = point1.u * fvz1;
-	PW_FLOAT fV1 = point1.v * fvz1;
+	PW_FLOAT fU1 = point1.u * fRatio1;
+	PW_FLOAT fV1 = point1.v * fRatio1;
 
 	for (int i = 0; i < steps;++i)
 	{
@@ -296,12 +305,12 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 		{
 			continue;
 		}
-		PW_FLOAT fsz = GetViewPortZ(1.f / fz);
-		if (GetValueOfZBuffer(ROUND(fx), ROUND(fy)) - fsz > 0/*m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] - fz> 0*/)
+		PW_FLOAT fsz = bPerCorrect ? GetViewPortZ(1.f / fz) : fz;
+		if (GetValueOfZBuffer(ROUND(fx), ROUND(fy)) - fsz > 0/*m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] - fz> 0*/ || !bEnableZTest)
 		{
 			PW_COLOR pwColor;
 			PW_FLOAT fsu,fsv;
-			PW_FLOAT fdz = 1.f / fz;
+			PW_FLOAT fdz = bPerCorrect ? 1.f / fz : 1;
 			fsu = fU1 * fdz;
 			fsv = fV1 * fdz;
 			PW_POINT3D in;
@@ -316,9 +325,10 @@ void PW_3DDevice::DrawLineTexture(PW_POINT3D point1, PW_POINT3D point2, int isol
 			//}
 			//else
 			//	pwColor = fLp1 * fdz * m_texture->GetColor(fsu, fsv);
-		
-			SetValueOfCBuffer(ROUND(fx), ROUND(fy), pwColor);
-			SetValueOfZBuffer(ROUND(fx), ROUND(fy), fsz);
+			if (bEnableColorWrite)
+				SetValueOfCBuffer(ROUND(fx), ROUND(fy), pwColor);
+			if (bEnableZWrite)
+				SetValueOfZBuffer(ROUND(fx), ROUND(fy), fsz);
 		}
 
 	}
@@ -339,13 +349,15 @@ void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid, P
 	{
 		return;
 	}
-
-	point1.y = m_iHeight - point1.y;
-	point2.y = m_iHeight - point2.y;
+	PW_BOOL bPersCorrect = !m_pCamera->IsOrthoCamera();
+	//point1.y = m_iHeight - point1.y;
+	//point2.y = m_iHeight - point2.y;
 	int dx = ROUND(point2.x) - ROUND(point1.x);
 	int dy = ROUND(point2.y) - ROUND(point1.y);
-	PW_FLOAT fvz1 = 1.f / GetViewZ(point1.z);
-	PW_FLOAT fvz2 = 1.f / GetViewZ(point2.z);
+	PW_FLOAT fvz1 = bPersCorrect ? 1.f / GetViewZ(point1.z) : point1.z;
+	PW_FLOAT fvz2 = bPersCorrect ? 1.f / GetViewZ(point2.z) : point2.z;
+	PW_FLOAT fRatio1 = bPersCorrect ? fvz1 : 1;
+	PW_FLOAT fRatio2 = bPersCorrect ? fvz2 : 1;
 	PW_FLOAT dz = fvz2 - fvz1;
 	int steps;
 	if (abs(dx) > abs(dy))
@@ -356,15 +368,15 @@ void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid, P
 		steps = abs(dy);
 	if (!(ROUND(point1.y) < 0 || ROUND(point1.y) >= m_iHeight || ROUND(point1.x) < 0 || ROUND(point1.x) >= m_iWidth))
 	{
-		if (!bEnableZTest || m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] - point1.z> 0)
+		if (!bEnableZTest || GetValueOfZBuffer( ROUND(point1.x) ,ROUND(point1.y)) - point1.z> 0)
 		{
 			
 			PW_COLOR pwColor = fnPixelShader(point1);
 
 			if (bEnableColorWrite)
-				m_pBitBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = pwColor;
+				SetValueOfCBuffer(ROUND(point1.x), ROUND(point1.y), pwColor); //m_pBitBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = pwColor;
 			if (bEnableZWrite)
-				m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = point1.z;
+				SetValueOfZBuffer(ROUND(point1.x), ROUND(point1.y), point1.z);//m_pZBuffer[ROUND(point1.y) * m_iWidth + ROUND(point1.x)] = point1.z;
 
 		}	
 	}
@@ -375,16 +387,16 @@ void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid, P
 	PW_FLOAT fIncrementx = dx / (PW_FLOAT)steps;
 	PW_FLOAT fIncrementy = dy / (PW_FLOAT)steps;
 	PW_FLOAT fIncrementz = dz / steps;
-	PW_FLOAT fIncrementr = ((PW_FLOAT)(PW_RGBA_R(point2.pwColor)) * fvz2 - PW_FLOAT(PW_RGBA_R(point1.pwColor)) * fvz1) / PW_FLOAT(steps);
-	PW_FLOAT fIncrementg = ((PW_FLOAT)(PW_RGBA_G(point2.pwColor)) * fvz2 - PW_FLOAT(PW_RGBA_G(point1.pwColor)) * fvz1) / PW_FLOAT(steps);
-	PW_FLOAT fIncrementb = ((PW_FLOAT)(PW_RGBA_B(point2.pwColor)) * fvz2 - PW_FLOAT(PW_RGBA_B(point1.pwColor)) * fvz1) / PW_FLOAT(steps);
+	PW_FLOAT fIncrementr = ((PW_FLOAT)(PW_RGBA_R(point2.pwColor)) * fRatio2 - PW_FLOAT(PW_RGBA_R(point1.pwColor)) * fRatio1) / PW_FLOAT(steps);
+	PW_FLOAT fIncrementg = ((PW_FLOAT)(PW_RGBA_G(point2.pwColor)) * fRatio2 - PW_FLOAT(PW_RGBA_G(point1.pwColor)) * fRatio1) / PW_FLOAT(steps);
+	PW_FLOAT fIncrementb = ((PW_FLOAT)(PW_RGBA_B(point2.pwColor)) * fRatio2 - PW_FLOAT(PW_RGBA_B(point1.pwColor)) * fRatio1) / PW_FLOAT(steps);
 
 	PW_FLOAT fx = point1.x;
 	PW_FLOAT fy = point1.y;
 	PW_FLOAT fz = fvz1;
-	PW_FLOAT fr = (PW_FLOAT)(PW_RGBA_R(point1.pwColor)) * fvz1;
-	PW_FLOAT fg = (PW_FLOAT)(PW_RGBA_G(point1.pwColor)) * fvz1;
-	PW_FLOAT fb = PW_FLOAT(PW_RGBA_B(point1.pwColor)) * fvz1;
+	PW_FLOAT fr = (PW_FLOAT)(PW_RGBA_R(point1.pwColor)) * fRatio1;
+	PW_FLOAT fg = (PW_FLOAT)(PW_RGBA_G(point1.pwColor)) * fRatio1;
+	PW_FLOAT fb = PW_FLOAT(PW_RGBA_B(point1.pwColor)) * fRatio1;
 
 	for (int i = 0; i < steps;++i)
 	{
@@ -415,13 +427,22 @@ void PW_3DDevice::DrawLine2D(PW_POINT3D point1, PW_POINT3D point2, int isolid, P
 		{
 			continue;
 		}
-		PW_FLOAT fdz = 1.f / fz;
-		PW_FLOAT fsz = GetViewPortZ(fdz);
-		if (!bEnableZTest || m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] - fsz> 0)
+		PW_FLOAT fdz = bPersCorrect ? 1.f / fz : 1;
+		PW_FLOAT fsz = bPersCorrect ? GetViewPortZ(fdz) : fz;
+		if (!bEnableZTest || GetValueOfZBuffer(ROUND(fx), ROUND(fy)) - fsz> 0)
 		{	
-			PW_COLOR pwColor =  PW_RGBA(ROUND(fr * fdz), ROUND(fg * fdz), ROUND(fb * fdz));
-			m_pBitBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] = pwColor;
-			m_pZBuffer[ROUND(fy) * m_iWidth + ROUND(fx)] = fsz;
+			PW_POINT3D pp;
+			pp.x = fx;
+			pp.y = fy;
+			pp.z = fsz;
+
+			pp.pwColor = PW_RGBA(ROUND(fr * fdz), ROUND(fg * fdz), ROUND(fb * fdz));
+			PW_COLOR pwColor;//=  PW_RGBA(ROUND(fr * fdz), ROUND(fg * fdz), ROUND(fb * fdz));
+			pwColor = fnPixelShader(pp);
+			if (bEnableColorWrite)
+				SetValueOfCBuffer(ROUND(fx), ROUND(fy), pwColor);
+			if (bEnableZWrite)
+				SetValueOfZBuffer(ROUND(fx), ROUND(fy), fsz);
 		}
 	
 	}
@@ -567,8 +588,10 @@ PW_Vector4D ShadowMapVS(PW_POINT3D& in)
 	PW_Vector4D p1;
 	PW_Matrix4D tan, projMatrix;
 	projMatrix = g_pPW3DDevice->GetShadowMapCamera()->GetProjMat();// this->m_pCamera->GetProjMat();
-	PW_MatrixProduct4D(projMatrix, g_pPW3DDevice->GetCamera()->GetViewMat(), tan);
-	p1 = in.MatrixProduct(tan);
+	//PW_MatrixProduct4D(projMatrix, g_pPW3DDevice->GetCamera()->GetViewMat(), tan);
+	p1 = in.MatrixProduct(g_pPW3DDevice->GetShadowMapCamera()->GetViewMat());
+	p1.MatrixProduct(projMatrix);
+	//p1 = in.MatrixProduct(tan);
 	p1.NoneHomogeneous();
 
 
@@ -606,6 +629,7 @@ PW_Vector4D ReceiveShodowVS(PW_POINT3D& in)
 	PW_Matrix4D tan, projMatrix;
 	projMatrix = g_pPW3DDevice->GetCamera()->GetProjMat();// this->m_pCamera->GetProjMat();
 	PW_MatrixProduct4D(projMatrix, g_pPW3DDevice->GetCamera()->GetViewMat(), tan);
+
 	p1 = in.MatrixProduct(tan);
 	p1.NoneHomogeneous();
 
@@ -618,15 +642,28 @@ PW_Vector4D ReceiveShodowVS(PW_POINT3D& in)
 
 PW_COLOR ReceiveShadowPS(PW_POINT3D& in)
 {
+	//PW_Vector3D vTest(10, 10, 20);
+	//PW_Vector4D vT4 = vTest.MatrixProduct(g_pPW3DDevice->GetShadowMapCamera()->GetViewMat());
+	//vT4.MatrixProduct(g_pPW3DDevice->GetShadowMapCamera()->GetProjMat());
+	//vT4.NoneHomogeneous();
+	//vT4.MatrixProduct(g_pPW3DDevice->GetViewportMatrix());
+	//PW_Vector3D vTT = vT4;
+
+	//PW_Vector3D vORI;
+	//g_pPW3DDevice->GetViewPos(vTT, vORI);
+	//vORI = vORI.MatrixProduct(g_pPW3DDevice->GetShadowMapCamera()->GetInverseViewMat());
+
 	PW_COLOR pwColor;
 	PW_Texture* pTexture = g_pPW3DDevice->GetTexture();
 	PW_Vector3D vViewPos;
-	g_pPW3DDevice->GetViewPos(in, vViewPos);
+	PW_POINT3D tmpPoint = in;
+	//tmpPoint.y = g_pPW3DDevice->GetViewPortHeight() - in.y;
+	g_pPW3DDevice->GetViewPos(tmpPoint, vViewPos);
 	PW_Vector4D vWorldPos = vViewPos.MatrixProduct(g_pPW3DDevice->GetCamera()->GetInverseViewMat());
 	vWorldPos.MatrixProduct(g_pPW3DDevice->GetShadowMapCamera()->GetViewMat());
 	vWorldPos.MatrixProduct(g_pPW3DDevice->GetShadowMapCamera()->GetProjMat());
-	
-	PW_FLOAT fShadowZ = g_pPW3DDevice->GetValueOfShadowZBuffer(ROUND(vWorldPos.x), ROUND(vWorldPos.y));
+	vWorldPos.MatrixProduct(g_pPW3DDevice->GetViewportMatrix());
+	PW_FLOAT fShadowZ = g_pPW3DDevice->GetValueOfShadowZBuffer(ROUND(vWorldPos.x), ROUND(/*g_pPW3DDevice->GetViewPortHeight() -*/ vWorldPos.y));
 
 	PW_COLORF fShadowValue = PW_COLORF(1.f, 1.f, 1.f, 1.f);
 
@@ -635,7 +672,7 @@ PW_COLOR ReceiveShadowPS(PW_POINT3D& in)
 		fShadowValue = fShadowValue * 0.5f;
 	}
 
-	if (!pTexture)
+	//if (!pTexture)
 	{
 		return  fShadowValue * in.pwColor;
 	}
@@ -646,6 +683,14 @@ PW_COLOR ReceiveShadowPS(PW_POINT3D& in)
 	else
 		pwColor = in.fP * fShadowValue * pTexture->GetColor(in.u, in.v);
 	return pwColor;
+}
+
+void PW_3DDevice::ViewPortClamp(PW_Vector4D& p1)
+{
+	p1.x = fmax(0.f, p1.x);
+	p1.y = fmax(0.f, p1.y);
+	p1.x = fmin(m_iWidth, p1.x);
+	p1.y = fmin(m_iHeight, p1.y);
 }
 
 //观察坐标系中的点
@@ -685,6 +730,11 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
  	p1.MatrixProduct(m_viewportMatrix);
 	p2.MatrixProduct(m_viewportMatrix);
 	p3.MatrixProduct(m_viewportMatrix);
+
+	//ViewPortClamp(p1);
+	//ViewPortClamp(p2);
+	//ViewPortClamp(p3);
+
 	PW_BOOL bEnableZTest = m_dwRenderState & PW_RS_ENABLEZTEST;
 	if (ds == wireframe)
 	{
@@ -704,10 +754,22 @@ void PW_3DDevice::DrawTriPrimitive(PW_POINT3D point1, PW_POINT3D point2, PW_POIN
 	
 }
 
+void PW_3DDevice::DrawTriangle(PW_Vector4D point1, PW_Vector4D point2, PW_Vector4D point3)
+{
+	PW_FLOAT fW1 = point1.w;
+	PW_FLOAT fW2 = point2.w;
+	PW_FLOAT fW3 = point3.w;
+
+	point1.NoneHomogeneous();
+	point1.MatrixProduct(m_viewportMatrix);
+
+}
+
 void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D point3)
 {
 	PW_BOOL bEnableZTest = m_dwRenderState & PW_RS_ENABLEZTEST;
 	PW_BOOL bPerspectiveCorrect = !m_pCamera->IsOrthoCamera();
+	
 	PW_POINT3D pps[3];
 	pps[0] = point1;
 	if (point2.y < pps[0].y)
@@ -734,9 +796,9 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 	PW_FLOAT fZ1 = GetViewZ(pps[1].z);
 	PW_FLOAT fZ2 = GetViewZ(pps[2].z);
 
-	PW_FLOAT fInterZ1 = bPerspectiveCorrect ? 1.f / fZ1 : fZ1;
-	PW_FLOAT fInterZ2 = bPerspectiveCorrect ? 1.f / fZ2 : fZ2;
-	PW_FLOAT fInterZ = bPerspectiveCorrect ? 1.f / fZ : fZ;
+	PW_FLOAT fInterZ1 = bPerspectiveCorrect ? 1.f / fZ1 : pps[1].z;
+	PW_FLOAT fInterZ2 = bPerspectiveCorrect ? 1.f / fZ2 : pps[2].z;
+	PW_FLOAT fInterZ = bPerspectiveCorrect ? 1.f / fZ : pps[0].z;
 	PW_FLOAT fRatioZ1 = bPerspectiveCorrect ? fInterZ1 : 1;
 	PW_FLOAT fRatioZ2 = bPerspectiveCorrect ? fInterZ2 : 1;
 	PW_FLOAT fRatioZ = bPerspectiveCorrect ? fInterZ : 1;
@@ -749,14 +811,14 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		PW_FLOAT fIncrementx2 = (pps[2].x - pps[0].x) / PW_FLOAT(dy2);
 		PW_FLOAT fIncrementz1 = (fInterZ1 - fInterZ) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementz2 = (fInterZ2 - fInterZ) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementr1 = ((PW_FLOAT)PW_RGBA_R(pps[1].pwColor) / fZ1 - (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementg1 = ((PW_FLOAT)PW_RGBA_G(pps[1].pwColor) / fZ1- (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementb1 = ((PW_FLOAT)PW_RGBA_B(pps[1].pwColor) / fZ1- (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) / fZ) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementr2 = ((PW_FLOAT)PW_RGBA_R(pps[2].pwColor) / fZ2- (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) / fZ) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementg2 = ((PW_FLOAT)PW_RGBA_G(pps[2].pwColor) / fZ2- (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) / fZ) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementb2 = ((PW_FLOAT)PW_RGBA_B(pps[2].pwColor) / fZ2- (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) / fZ) / PW_FLOAT(dy2);
-		PW_COLORF fIncrementlp1 = (pps[1].fP / fZ1 - pps[0].fP / fZ) / PW_FLOAT(dy1);
-		PW_COLORF fIncrementlp2 = (pps[2].fP / fZ2 - pps[0].fP / fZ) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementr1 = ((PW_FLOAT)PW_RGBA_R(pps[1].pwColor) * fRatioZ1 - (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) * fRatioZ) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementg1 = ((PW_FLOAT)PW_RGBA_G(pps[1].pwColor) * fRatioZ1 - (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) * fRatioZ) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementb1 = ((PW_FLOAT)PW_RGBA_B(pps[1].pwColor) * fRatioZ1 - (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) * fRatioZ) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementr2 = ((PW_FLOAT)PW_RGBA_R(pps[2].pwColor) * fRatioZ2 - (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) * fRatioZ) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementg2 = ((PW_FLOAT)PW_RGBA_G(pps[2].pwColor) * fRatioZ2 - (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) * fRatioZ) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementb2 = ((PW_FLOAT)PW_RGBA_B(pps[2].pwColor) * fRatioZ2 - (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) * fRatioZ) / PW_FLOAT(dy2);
+		PW_COLORF fIncrementlp1 = (pps[1].fP * fRatioZ1 - pps[0].fP * fRatioZ) / PW_FLOAT(dy1);
+		PW_COLORF fIncrementlp2 = (pps[2].fP * fRatioZ2 - pps[0].fP * fRatioZ) / PW_FLOAT(dy2);
 		PW_FLOAT fDu1 = (pps[1].u * fRatioZ1 - pps[0].u * fRatioZ) / PW_FLOAT(dy1);
 		PW_FLOAT fDu2 = (pps[2].u * fRatioZ2 - pps[0].u * fRatioZ) / PW_FLOAT(dy2);
 		PW_FLOAT fDv1 = (pps[1].v * fRatioZ1 - pps[0].v * fRatioZ) / PW_FLOAT(dy1);
@@ -780,14 +842,14 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		fZl = fInterZ;
 		fZr = fInterZ;
 		
-		PW_FLOAT fR1 = (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) / fZ;
-		PW_FLOAT fG1 = (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) / fZ;
-		PW_FLOAT fB1 = (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) / fZ;
-		PW_FLOAT fR2 = (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) / fZ;
-		PW_FLOAT fG2 = (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) / fZ;
-		PW_FLOAT fB2 = (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) / fZ;
-		PW_COLORF fLp1 = pps[0].fP / fZ;
-		PW_COLORF fLp2 = pps[0].fP / fZ;
+		PW_FLOAT fR1 = (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) * fRatioZ;
+		PW_FLOAT fG1 = (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) * fRatioZ;
+		PW_FLOAT fB1 = (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) * fRatioZ;
+		PW_FLOAT fR2 = (PW_FLOAT)PW_RGBA_R(pps[0].pwColor) * fRatioZ;
+		PW_FLOAT fG2 = (PW_FLOAT)PW_RGBA_G(pps[0].pwColor) * fRatioZ;
+		PW_FLOAT fB2 = (PW_FLOAT)PW_RGBA_B(pps[0].pwColor) * fRatioZ;
+		PW_COLORF fLp1 = pps[0].fP * fRatioZ;
+		PW_COLORF fLp2 = pps[0].fP * fRatioZ;
 		PW_FLOAT fU1 = pps[0].u * fRatioZ;
 		PW_FLOAT fV1 = pps[0].v * fRatioZ;
 		PW_FLOAT fU2 = pps[0].u * fRatioZ;
@@ -826,34 +888,34 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 			{
 				leftPoint.x = fXl;
 				leftPoint.y = curY;
-				leftPoint.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZl) : GetViewPortZ(fZl);
-				leftPoint.fP = fLp1 / fZl;
+				leftPoint.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZl) : (fZl);
+				leftPoint.fP = bPerspectiveCorrect ? fLp1 / fZl : fLp1;
 				leftPoint.u = bPerspectiveCorrect ? fU1 / fZl : fU1;
 				leftPoint.v = bPerspectiveCorrect ? fV1 / fZl : fV1;
-				leftPoint.pwColor = PW_RGBA(ROUND(fR1 / fZl), ROUND(fG1 / fZl), ROUND(fB1 / fZl));
+				leftPoint.pwColor = PW_RGBA(ROUND(bPerspectiveCorrect? fR1 / fZl : fR1), ROUND(bPerspectiveCorrect ? fG1 / fZl : fG1), ROUND(bPerspectiveCorrect ? fB1 / fZl : fB1));
 				rightPoint.x = fXr;
 				rightPoint.y = curY;
-				rightPoint.pwColor = PW_RGBA(ROUND(fR2 / fZr), ROUND(fG2 / fZr), ROUND(fB2 / fZr));
+				rightPoint.pwColor = PW_RGBA(ROUND(bPerspectiveCorrect ? fR2 / fZr : fR2), ROUND(bPerspectiveCorrect ? fG2 / fZr : fG2), ROUND(bPerspectiveCorrect ? fB2 / fZr : fB2));
 				rightPoint.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZr) : GetViewPortZ(fZr);
-				rightPoint.fP = fLp2 / fZr;
+				rightPoint.fP = bPerspectiveCorrect ? fLp2 / fZr : fLp2;
 				rightPoint.u = bPerspectiveCorrect ? fU2 / fZr : fU2;
 				rightPoint.v = bPerspectiveCorrect ? fV2 / fZr : fV2;
 			}
 			PW_POINT3D p1, p2;
 			p1.x = fXl;
 			p1.y = curY;
-			p1.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZl) : GetViewPortZ( fZl);
-			p1.fP = fLp1 / fZl;
-			p1.u = fU1 / fZl;
-			p1.v = fV1 / fZl;
-			p1.pwColor = PW_RGBA(ROUND(fR1 / fZl), ROUND(fG1 / fZl), ROUND(fB1 / fZl));
+			p1.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZl) :  fZl;
+			p1.fP = bPerspectiveCorrect ? fLp1 / fZl : fLp1;
+			p1.u = bPerspectiveCorrect ? fU1 / fZl : fU1;
+			p1.v = bPerspectiveCorrect ? fV1 / fZl : fV1;
+			p1.pwColor = PW_RGBA(ROUND(bPerspectiveCorrect ? fR1 / fZl : fR1), ROUND(bPerspectiveCorrect ? fG1 / fZl : fG1), ROUND(bPerspectiveCorrect ? fB1 / fZl : fB1));
 			p2.x = fXr;
 			p2.y = curY;
-			p2.z = GetViewPortZ(1.f / fZr);
-			p2.pwColor = PW_RGBA(ROUND(fR2 / fZr), ROUND(fG2 / fZr), ROUND(fB2 / fZr));
-			p2.fP = fLp2 / fZr;
-			p2.u = fU2 / fZr;
-			p2.v = fV2 / fZr;
+			p2.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZr) : fZr;
+			p2.pwColor = PW_RGBA(ROUND(bPerspectiveCorrect ? fR2 / fZr: fR2), ROUND(bPerspectiveCorrect ? fG2 / fZr : fG2), ROUND(bPerspectiveCorrect ? fB2 / fZr : fB2));
+			p2.fP = bPerspectiveCorrect ? fLp2 / fZr : fLp2;
+			p2.u = bPerspectiveCorrect ? fU2 / fZr : fU2;
+			p2.v = bPerspectiveCorrect ? fV2 / fZr : fV2;
 			if (m_bUseTexture)
 			{
 				DrawLineTexture(p1, p2);
@@ -869,53 +931,56 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 		{
 			leftPoint = pps[0];
 			rightPoint = pps[1];
-			fZl = 1 / fZ;
-			fZr = 1 / fZ1;
+			fZl = bPerspectiveCorrect ? 1 / fZ : pps[0].z;
+			fZr = bPerspectiveCorrect ? 1 / fZ1 : pps[1].z;
 		}
 		else
 		{
 			leftPoint = pps[1];
 			rightPoint = pps[0];
-			fZl = 1 / fZ1;
-			fZr = 1 / fZ;
+			fZl = bPerspectiveCorrect ? 1 / fZ1 : pps[1].z;
+			fZr = bPerspectiveCorrect ? 1 / fZ : pps[0].z;
 		}	
 	}
 	if (dy2 != 0 && dy2 > dy1)
 	{
+		PW_FLOAT fRatiol = bPerspectiveCorrect ? fZl : 1;
+		PW_FLOAT fRatior = bPerspectiveCorrect ? fZr : 1;
+		PW_FLOAT fRatio2 = bPerspectiveCorrect ? 1.f / fZ2 : 1;
 		dy1 = ROUND(pps[2].y) - ROUND(leftPoint.y);
 		dy2 = ROUND(pps[2].y) - ROUND(rightPoint.y) ;
 		PW_FLOAT fIncrementx1 = (pps[2].x - leftPoint.x) / PW_FLOAT(dy1);
 		PW_FLOAT fIncrementx2 = (pps[2].x - rightPoint.x) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementz1 = (1.f / fZ2 - fZl) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementz2 = (1.f / fZ2 - fZr) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementr1 = ((PW_FLOAT)PW_RGBA_R(pps[2].pwColor) / fZ2 - (PW_FLOAT)PW_RGBA_R(leftPoint.pwColor) * fZl) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementg1 = ((PW_FLOAT)PW_RGBA_G(pps[2].pwColor) / fZ2 - (PW_FLOAT)PW_RGBA_G(leftPoint.pwColor) * fZl) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementb1 = ((PW_FLOAT)PW_RGBA_B(pps[2].pwColor) / fZ2 - (PW_FLOAT)PW_RGBA_B(leftPoint.pwColor) * fZl) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementr2 = ((PW_FLOAT)PW_RGBA_R(pps[2].pwColor) / fZ2 - (PW_FLOAT)PW_RGBA_R(rightPoint.pwColor) * fZr) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementg2 = ((PW_FLOAT)PW_RGBA_G(pps[2].pwColor) / fZ2 - (PW_FLOAT)PW_RGBA_G(rightPoint.pwColor) * fZr) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementb2 = ((PW_FLOAT)PW_RGBA_B(pps[2].pwColor) / fZ2 - (PW_FLOAT)PW_RGBA_B(rightPoint.pwColor) * fZr) / PW_FLOAT(dy2);
-		PW_COLORF fIncrementlp1 = (pps[2].fP / fZ2 - leftPoint.fP * fZl) / PW_FLOAT(dy1);
-		PW_COLORF fIncrementlp2 = (pps[2].fP / fZ2 - rightPoint.fP * fZr) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementu1 = (pps[2].u / fZ2 - leftPoint.u * fZl) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementv1 = (pps[2].v / fZ2 - leftPoint.v * fZl) / PW_FLOAT(dy1);
-		PW_FLOAT fIncrementu2 = (pps[2].u / fZ2 - rightPoint.u * fZr) / PW_FLOAT(dy2);
-		PW_FLOAT fIncrementv2 = (pps[2].v / fZ2 - rightPoint.v * fZr) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementz1 = ((bPerspectiveCorrect ? 1.f / fZ2 : pps[2].z) - fZl) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementz2 = ((bPerspectiveCorrect ? 1.f / fZ2 : pps[2].z) - fZr) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementr1 = ((PW_FLOAT)PW_RGBA_R(pps[2].pwColor) * fRatio2 - (PW_FLOAT)PW_RGBA_R(leftPoint.pwColor) * fRatiol) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementg1 = ((PW_FLOAT)PW_RGBA_G(pps[2].pwColor) * fRatio2 - (PW_FLOAT)PW_RGBA_G(leftPoint.pwColor) * fRatiol) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementb1 = ((PW_FLOAT)PW_RGBA_B(pps[2].pwColor) * fRatio2 - (PW_FLOAT)PW_RGBA_B(leftPoint.pwColor) * fRatiol) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementr2 = ((PW_FLOAT)PW_RGBA_R(pps[2].pwColor) * fRatio2 - (PW_FLOAT)PW_RGBA_R(rightPoint.pwColor) * fRatior) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementg2 = ((PW_FLOAT)PW_RGBA_G(pps[2].pwColor) * fRatio2 - (PW_FLOAT)PW_RGBA_G(rightPoint.pwColor) * fRatior) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementb2 = ((PW_FLOAT)PW_RGBA_B(pps[2].pwColor) * fRatio2 - (PW_FLOAT)PW_RGBA_B(rightPoint.pwColor) * fRatior) / PW_FLOAT(dy2);
+		PW_COLORF fIncrementlp1 = (pps[2].fP * fRatio2 - leftPoint.fP * fRatiol) / PW_FLOAT(dy1);
+		PW_COLORF fIncrementlp2 = (pps[2].fP * fRatio2 - rightPoint.fP * fRatior) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementu1 = (pps[2].u * fRatio2 - leftPoint.u * fRatiol) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementv1 = (pps[2].v * fRatio2 - leftPoint.v * fRatiol) / PW_FLOAT(dy1);
+		PW_FLOAT fIncrementu2 = (pps[2].u * fRatio2 - rightPoint.u * fRatior) / PW_FLOAT(dy2);
+		PW_FLOAT fIncrementv2 = (pps[2].v * fRatio2 - rightPoint.v * fRatior) / PW_FLOAT(dy2);
 		int steps = dy1;
-		PW_FLOAT fCurR1 = (PW_FLOAT)PW_RGBA_R(leftPoint.pwColor) * fZl;
-		PW_FLOAT fCurG1 = (PW_FLOAT)PW_RGBA_G(leftPoint.pwColor) * fZl;
-		PW_FLOAT fCurB1 = (PW_FLOAT)PW_RGBA_B(leftPoint.pwColor) * fZl;
-		PW_FLOAT fCurR2 = (PW_FLOAT)PW_RGBA_R(rightPoint.pwColor) * fZr;
-		PW_FLOAT fCurG2 = (PW_FLOAT)PW_RGBA_G(rightPoint.pwColor) * fZr;
-		PW_FLOAT fCurB2 = (PW_FLOAT)PW_RGBA_B(rightPoint.pwColor) * fZr;
+		PW_FLOAT fCurR1 = (PW_FLOAT)PW_RGBA_R(leftPoint.pwColor) * fRatiol;
+		PW_FLOAT fCurG1 = (PW_FLOAT)PW_RGBA_G(leftPoint.pwColor) * fRatiol;
+		PW_FLOAT fCurB1 = (PW_FLOAT)PW_RGBA_B(leftPoint.pwColor) * fRatiol;
+		PW_FLOAT fCurR2 = (PW_FLOAT)PW_RGBA_R(rightPoint.pwColor) * fRatior;
+		PW_FLOAT fCurG2 = (PW_FLOAT)PW_RGBA_G(rightPoint.pwColor) * fRatior;
+		PW_FLOAT fCurB2 = (PW_FLOAT)PW_RGBA_B(rightPoint.pwColor) * fRatior;
 		PW_FLOAT fx1 = (leftPoint.x);
 		PW_FLOAT fx2 = (rightPoint.x);
 
-		PW_COLORF flp1 = leftPoint.fP * fZl;
-		PW_COLORF flp2 = rightPoint.fP * fZr;
-		PW_FLOAT fU1 = leftPoint.u * fZl;
-		PW_FLOAT fV1 = leftPoint.v * fZl;
-		PW_FLOAT fU2 = rightPoint.u * fZr;
-		PW_FLOAT fV2 = rightPoint.v * fZr;
+		PW_COLORF flp1 = leftPoint.fP * fRatiol;
+		PW_COLORF flp2 = rightPoint.fP * fRatior;
+		PW_FLOAT fU1 = leftPoint.u * fRatiol;
+		PW_FLOAT fV1 = leftPoint.v * fRatiol;
+		PW_FLOAT fU2 = rightPoint.u * fRatior;
+		PW_FLOAT fV2 = rightPoint.v * fRatior;
 		int curY = ROUND(leftPoint.y);
 		for (int k = 0; k < steps;++k)
 		{
@@ -940,19 +1005,19 @@ void PW_3DDevice::DrawTriangle(PW_POINT3D point1, PW_POINT3D point2, PW_POINT3D 
 			PW_POINT3D p1, p2;
 			p1.x = fx1;
 			p1.y = curY;
-			p1.z = GetViewPortZ(1.f / fZl);
-			p1.fP = flp1 / fZl;
-			p1.u = fU1 / fZl;
-			p1.v = fV1 / fZl;
+			p1.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZl) : fZl;
+			p1.fP = bPerspectiveCorrect ? flp1 / fZl : flp1;
+			p1.u = bPerspectiveCorrect ? fU1 / fZl : fU1;
+			p1.v = bPerspectiveCorrect ? fV1 / fZl : fV1;
 
-			p1.pwColor = PW_RGBA(ROUND(fCurR1 / fZl), ROUND(fCurG1 / fZl), ROUND(fCurB1 / fZl));
+			p1.pwColor = PW_RGBA(ROUND(bPerspectiveCorrect ? fCurR1 / fZl : fCurR1), ROUND(bPerspectiveCorrect ? fCurG1 / fZl : fCurG1), ROUND(bPerspectiveCorrect ? fCurB1 / fZl : fCurB1));
 			p2.x = fx2;
 			p2.y = curY;
-			p2.z = GetViewPortZ(1.f / fZr);
-			p2.fP = flp2 / fZr;
-			p2.u = fU2 / fZr;
-			p2.v = fV2 / fZr;
-			p2.pwColor = PW_RGBA(ROUND(fCurR2 / fZr), ROUND(fCurG2 / fZr), ROUND(fCurB2 / fZr));
+			p2.z = bPerspectiveCorrect ? GetViewPortZ(1.f / fZr) : fZr;
+			p2.fP = bPerspectiveCorrect ? flp2 / fZr : flp2;
+			p2.u = bPerspectiveCorrect ? fU2 / fZr : fU2;
+			p2.v = bPerspectiveCorrect ? fV2 / fZr : fV2;
+			p2.pwColor = PW_RGBA(ROUND(bPerspectiveCorrect ? fCurR2 / fZr : fCurR2), ROUND(bPerspectiveCorrect ? fCurG2 / fZr : fCurG2), ROUND(bPerspectiveCorrect ? fCurB2 / fZr : fCurB2));
 			if (m_bUseTexture)
 			{
 				DrawLineTexture(p1, p2);
@@ -1202,6 +1267,7 @@ void PW_3DDevice::UpdateCurLight()
 		}
 		else if (m_vLights[i]->m_iLightType == pw_lt_pointlight)
 		{
+			RenderShadowMap(m_vLights[i]);
 			PW_Vector3D vP = m_vLights[i]->m_vPosition.MatrixProduct(m_pCamera->GetViewMat());
 			lightdir = vP;
 			m_vLights[i]->m_vCurDir = vP;
@@ -1475,8 +1541,10 @@ void PW_3DDevice::RenderShadowMap(PW_Light* pLight)
 	}
 	fnPixelShader = ShadowMapPS;
 	fnVertexShader = ShadowMapVS;
-	m_dwRenderState = PW_RS_ENABLEZWRITE | PW_RS_ENABLEZTEST;
+	m_dwRenderState = PW_RS_ENABLEZWRITE | PW_RS_ENABLEZTEST /*| PW_RS_ENABLECOLORWRITE*/;
 	PW_FLOAT* pOldBuffer = GetZBuffer();
+	PW_CameraBase* pOldCamera = m_pCamera;
+	m_pCamera = m_pShadowMapCamera;
 	SetZBuffer(m_pShadowZBuffer);
 
 	PW_Vector3D vMin(10000.f, 10000.f, 10000.f);
@@ -1522,15 +1590,30 @@ void PW_3DDevice::RenderShadowMap(PW_Light* pLight)
 	vLookAt.z = (vMin.z + vMax.z) / 2.f;
 	PW_Vector3D vLen = vMax - vMin;
 	PW_FLOAT fExtend = vLen.GetLen() / 2.f;
+	if (pLight->m_iLightType == pw_lt_pointlight)
+	{
+		
+		PW_Vector3D vPos =  pLight->GetPos();
+		PW_Vector3D vDir = vLookAt - vPos;
+		PW_FLOAT fFov = atan(fExtend / vDir.GetLen());
+		vDir.Normalize();
+		PW_Vector3D vUp = vDir + PW_Vector3D(vDir.x + 1, vDir.y * 2 + 2, vDir.z * 3 + 3);
 
-	PW_Vector3D vDir = pLight->m_vDirection;
-	vDir.Normalize();
+		m_pShadowMapCamera->SetCamerInfo(vPos, vLookAt, vUp, fFov, 1.f, 1.f, 10000.f);
+	}
+	else if (pLight->m_iLightType == pw_lt_directionallight)
+	{
+		
+		PW_Vector3D vDir = pLight->m_vDirection;
+		vDir.Normalize();
 
-	PW_Vector3D vPos = vLookAt - vDir * (fExtend + 5.f);
+		PW_Vector3D vPos = vLookAt - vDir * (fExtend + 5.f);
 
-	PW_Vector3D vUp = vDir + PW_Vector3D(vDir.x + 1, vDir.y * 2 + 2, vDir.z * 3 + 3);
+		PW_Vector3D vUp = vDir + PW_Vector3D(vDir.x + 1, vDir.y * 2 + 2, vDir.z * 3 + 3);
 
-	m_pShadowMapCamera->SetCamerInfo(vPos, vLookAt, vUp, fExtend, 1.f, 1.f, 10000.f);
+		m_pShadowMapCamera->SetCamerInfo(vPos, vLookAt, vUp, fExtend, 1.f, 1.f, 10000.f);
+	}
+	
 
 	for (int n = 0; n < m_pMeshs.size(); n++)
 	{
@@ -1558,6 +1641,7 @@ void PW_3DDevice::RenderShadowMap(PW_Light* pLight)
 
 	}
 	SetZBuffer(pOldBuffer);
+	m_pCamera = pOldCamera;
 }
 
 void PW_3DDevice::RenderScene()

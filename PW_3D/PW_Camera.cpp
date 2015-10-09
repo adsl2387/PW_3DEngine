@@ -136,7 +136,7 @@ void PW_OrthoCamera::SetCamerInfo(PW_Vector3D vPos, PW_Vector3D vLookAt, PW_Vect
 
 PW_FLOAT PW_OrthoCamera::GetViewZ(PW_FLOAT fScreenZ)
 {
-	PW_FLOAT z = fScreenZ - m_projMat[2][3];
+	PW_FLOAT z = fScreenZ * 2 - 1.f - m_projMat[2][3];
 	z = z / m_projMat[2][2];
 	return z;
 }
@@ -144,5 +144,5 @@ PW_FLOAT PW_OrthoCamera::GetViewZ(PW_FLOAT fScreenZ)
 PW_FLOAT PW_OrthoCamera::GetViewPortZ(PW_FLOAT fViewZ)
 {
 	PW_FLOAT z = fViewZ * m_projMat[2][2] + m_projMat[2][3];
-	return z;
+	return z / 2 + 0.5f;;
 }

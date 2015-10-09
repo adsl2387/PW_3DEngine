@@ -190,6 +190,10 @@ struct PW_Vector4D
 
 	void NoneHomogeneous()
 	{
+		//if (w < 0)
+		//{
+		//	w = -w;
+		//}
 		if (w != 0.f)
 		{
 			x /= w;
