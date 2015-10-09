@@ -74,8 +74,8 @@ bool PW_3DDevice::Create(HWND hWnd, int iWidth, int iHeight, HWND hEdit)
 	m_bShow = 0;
 	m_curIndexPos = 0;
 	m_curV4DPos = 0;
-	//m_pShadowMapCamera = new PW_OrthoCamera;
-	m_pShadowMapCamera = new PW_PerspectiveCamera;
+	m_pShadowMapCamera = new PW_OrthoCamera;
+	//m_pShadowMapCamera = new PW_PerspectiveCamera;
 	return true;
 }
 

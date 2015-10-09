@@ -560,11 +560,11 @@ void InitScene()
 		g_PWDirecLight.m_cSpecular = PW_COLORF(1.f, 1.f, 1.f);
 		g_PWDirecLight.m_cAmbient = PW_COLORF(0.f, 0.f, 0.f);
 		g_PWDirecLight.m_cDiffuse = PW_COLORF(1.f, 1.f, 1.f);
-		//g_pPW3DDevice->AddLight(&g_PWDirecLight);
+		g_pPW3DDevice->AddLight(&g_PWDirecLight);
 		g_PWPointLight = g_PWDirecLight;
 		g_PWPointLight.m_iLightType = pw_lt_pointlight;
 		
-		g_pPW3DDevice->AddLight(&g_PWPointLight);
+		//g_pPW3DDevice->AddLight(&g_PWPointLight);
 	
 		g_pPW3DDevice->SetAmbientColor(PW_COLORF(0., 0.2, 0.3));
 
