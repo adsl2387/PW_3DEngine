@@ -199,7 +199,7 @@ PW_BOOL RayInserctionPlane(PW_Vector3D& vStart, PW_Vector3D& vDelta, PW_Triangle
 	PW_FLOAT u;
 	PW_FLOAT dot1 = PW_DotProduct(vp, vNorm);
 	PW_FLOAT dot2 = PW_DotProduct(vDelta, vNorm);
-	if (abs(dot2) < EPSILON)
+	if (fabs(dot2) < EPSILON)
 	{
 		return PW_FALSE;
 	}

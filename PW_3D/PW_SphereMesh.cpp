@@ -92,7 +92,7 @@ PW_BOOL PW_SphereMesh::RayReflect(PW_LightRay& lightRay, PW_LightRay& reflectLig
 	PW_Vector3D vNor = vHit - m_vPosInView;
 	vNor.Normalize();
 	PW_Vector3D vRef1;
-	PW_FLOAT fHalf = abs(PW_DotProduct(vNor, lightRay.vDir))  ;
+	PW_FLOAT fHalf = fabs(PW_DotProduct(vNor, lightRay.vDir))  ;
 	if (fDis > fR2 + EPSILON * 10.f)
 	{
 		vRef1 = vNor * fHalf * 2.f + lightRay.vDir;

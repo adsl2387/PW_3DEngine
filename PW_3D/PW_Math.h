@@ -74,7 +74,7 @@ struct PW_Vector3D
 
 	PW_BOOL IsEqual(PW_Vector3D& v)
 	{
-		if (abs(v.x - x) < EPSILON && abs(v.y - y) < EPSILON && abs(v.z - z) < EPSILON)
+		if (fabs(v.x - x) < EPSILON && fabs(v.y - y) < EPSILON && fabs(v.z - z) < EPSILON)
 		{
 			return PW_TRUE;
 		}
@@ -86,7 +86,7 @@ struct PW_Vector3D
 
 	PW_BOOL IsZero()
 	{
-		if (abs(0.f - x) < EPSILON && abs(0.f - y) < EPSILON && abs(0.f - z) < EPSILON)
+		if (fabs(0.f - x) < EPSILON && fabs(0.f - y) < EPSILON && fabs(0.f - z) < EPSILON)
 		{
 			return PW_TRUE;
 		}
@@ -366,7 +366,7 @@ inline PW_Vector3D Interpolation( PW_Vector3D& p,  PW_Vector3D& p1,  PW_Vector3D
 	PW_Vector3D vNorr = vNor1 * (1 - v) + vNor3 * v;
 	PW_FLOAT x1 = p1.x + vdir1.x * u;
 	PW_FLOAT x2 = p1.x + vdir2.x * v;
-	PW_FLOAT uu = abs(p.x - x1) / abs(x1 - x2);
+	PW_FLOAT uu = fabs(p.x - x1) / fabs(x1 - x2);
 	PW_Vector3D vNorrr = vNorl * (1 - uu) + vNorr * uu;
 	vNorr.Normalize();
 	return vNorrr;
